@@ -1,34 +1,25 @@
-
-var cloth = null;
 var scene = null;
-//var mesh = null;
 
 function start () {
   scene = new Scene();
-  scene.camera.projection = Mat4.perspective( 70, 1.33, 0.01, 10 );
-  //scene.camera.position = new Vec3( 1.0, 1.0, 1.0 );
-  //scene.camera.rotation = new Vec3( 0, 45, 0 );
+  scene.addSystem( new System() );
+  scene.addSystem( new Renderer() );
 
-  /*
-  mesh = new Mesh([
-    -1, 0, 0,
-    0, 1, 0,
-    1, 0, 0
-  ], new Shader("lambert") );
-  scene.nodes.push( mesh );
-  */
+  var entity = new Entity();
+  var renderable = new Renderable();
+  renderable.material = new Material( new Shader("test", "./assets/shaders/test.vert", "./assets/shaders/test.frag") );
+  renderable.mesh = new Mesh( "./assets/models/cube.obj" );
+  entity.addComponent( renderable );
+  scene.addEntity( entity );
 
-  cloth = new Cloth( 1, 1, 15, 15, new Shader("test") );
-  scene.nodes.push( cloth );
+  var camera = new Entity();
+  camera.addComponent( new Camera( 60, new Vec3( 100, 100, 0 ) ) );
+  camera.getComponent( "Transform" ).position.z = -5;
+  scene.addEntity( camera );
 
-  setInterval( function(){update(0.03)}, 30 );
-  //setInterval( function(){update(0.1)}, 100 );
-}
+  //var texture = new Texture("./assets/textures/testTexture.png");
 
-var time = 0;
-function update ( dt ) {
-  time += dt;
-
-  cloth.step( dt );
-  scene.draw();
+  scene.startup();
+  scene.update( 0.0 );
+  //setInterval( function(){scene.update(0.1)}, 100 );
 }

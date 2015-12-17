@@ -4,14 +4,17 @@
     <meta charset="utf-8">
     <title>WebGL</title>
 
-    <script src="debug/webgl-debug.js"></script>
+    <!-- Debugging Tools and Helpers -->
+    <script src="core-helpers.js"></script>
+
+    <!-- Load 3D Math Types -->
+    <script src="math/vector.js"></script>
+    <script src="math/matrix.js"></script>
+    <script src="math/quaternion.js"></script>
 
     <!-- Load WebGL Core -->
-    <script src="gl-core/vector.js"></script>
-    <script src="gl-core/matrix.js"></script>
     <script src="gl-core/gl.js"></script>
-    <script src="gl-core/gl-helpers.js"></script>
-
+    <!--
     <script src="gl-core/shader.js"></script>
     <script src="gl-core/scene-node.js"></script>
     <script src="gl-core/scene-node-camera.js"></script>
@@ -22,41 +25,31 @@
     <script src="cloth/scene-node-cloth.js"></script>
 
     <script src="gl-core/scene.js"></script>
+    -->
 
+
+    <!-- Load Engine Asset Definitions -->
+    <script src="engine/assets/asset.js"></script>
+    <script src="engine/assets/shader.js"></script>
+    <script src="engine/assets/texture.js"></script>
+    <script src="engine/assets/material.js"></script>
+    <script src="engine/assets/mesh.js"></script>
+
+    <!-- Load Engine Core -->
+    <script src="engine/component.js"></script>
+    <script src="engine/components/component-transform.js"></script>
+    <script src="engine/components/component-renderable.js"></script>
+    <script src="engine/components/component-camera.js"></script>
+
+    <script src="engine/system.js"></script>
+    <script src="engine/systems/system-renderer.js"></script>
+
+    <script src="engine/entity.js"></script>
+    <script src="engine/scene.js"></script>
+
+    <!-- Load Main -->
     <script src="main.js"></script>
 
-    <!-- Load Application Data -->
-    <script id="shader-test-vs" type="x-shader/x-vertex">
-      #version 100
-      precision mediump float;
-
-      uniform mat4 uModelView;
-      uniform mat4 uProjection;
-
-      attribute vec3 vNormal;
-      attribute vec3 vPosition;
-
-      varying vec3 normal;
-
-      void main() {
-        normal = vNormal;
-        gl_Position = uProjection * uModelView * vec4(vPosition,1.0);
-      }
-    </script>
-    <script id="shader-test-fs" type="x-shader/x-fragment">
-      #version 100
-      precision mediump float;
-
-      uniform mat4 uModelView;
-      uniform mat4 uProjection;
-
-      varying vec3 normal;
-
-      void main() {
-        //float dPow = abs( dot( normalize(normal), normalize(vec3( 1, 1, 1 )) ) );
-        gl_FragColor = vec4( (normalize(normal)+1.0)*0.5, 1.0); //dPow * vec4(0.5,0.5,0.5,1.0);
-      }
-    </script>
 
   </head>
   <body onload="webGLStart(); start();">

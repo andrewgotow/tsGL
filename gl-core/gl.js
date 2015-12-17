@@ -1,4 +1,4 @@
-var gl; // A global variable for the WebGL context
+var gl = null; // A global variable for the WebGL context
 
 // initialize webGL on our canvas. This is called in the document "OnLoad" block,
 // and should build the openGL context.
@@ -19,7 +19,7 @@ function initWebGL(canvas) {
   var gl = null;
 
   try {
-    gl = WebGLDebugUtils.makeDebugContext( canvas.getContext("webgl") || canvas.getContext("experimental-webgl") );
+    gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
   }
   catch(e) {}
 
