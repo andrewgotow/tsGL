@@ -17,5 +17,5 @@ Transform.prototype.getMatrix = function () {
   var t = Mat4.makeTranslation( this.position );
   var r = this.rotation.getMatrix();
   var s = Mat4.makeScale( this.scale );
-  return Mat4.mult( Mat4.mult( Mat4.mult( p, t ), r ), s );
+  return Mat4.multiply( Mat4.multiply( Mat4.multiply( s, r ), t ), p );
 }

@@ -25,6 +25,8 @@ Renderer.prototype.update = function ( dt ) {
   for ( var camIndex = 0; camIndex < this._cameras.length; camIndex ++ ) {
     var camera = this._cameras[camIndex];
     camera.useCamera();
+    var viewMat = Mat4.invert( camera.entity.getComponent("Transform").getMatrix() );
+    var projectionMat = camera.getProjection();
 
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
@@ -51,14 +53,25 @@ Renderer.prototype.update = function ( dt ) {
         continue;
       }
 
+      var modelMat = renderable.entity.getComponent("Transform").getMatrix();
+      var modelViewMat = Mat4.multiply( modelMat, viewMat );
+      // bind the transformation uniforms necessary to render this object.
+      renderable.material.properties[ "uModelViewMatrix" ] = modelViewMat;
+      renderable.material.properties[ "uProjection" ] = projectionMat;
+      renderable.material.properties[ "uNormalMatrix" ] = Mat4.transpose( Mat4.invert( modelViewMat ) );
+
       // bind the material asset for drawing (also sets uniforms)
       renderable.material.useMaterial();
 
       // bind the renderable object's vertex buffers
       gl.bindBuffer( gl.ARRAY_BUFFER, renderable.mesh.getVbo() );
       gl.vertexAttribPointer( renderable.material.shader.attributes["vPosition"], 3, gl.FLOAT, false, 0, 0);
-      gl.vertexAttribPointer( renderable.material.shader.attributes["vNormal"], 3, gl.FLOAT, false, 0, 4 * renderable.mesh.vertices.length); // 4 bytes per float, 3 floats per vertex
-      gl.vertexAttribPointer( renderable.material.shader.attributes["vUV"], 2, gl.FLOAT, false, 0, 4 * (renderable.mesh.vertices.length + 4 * renderable.mesh.normals.length) ); // 4 bytes per float, 3 floats per vertex
+      gl.vertexAttribPointer( renderable.material.shader.attributes["vNormal"], 3, gl.FLOAT, true, 0, 4 * (renderable.mesh.positions.length)); // 4 bytes per float, 3 floats per vertex
+      gl.vertexAttribPointer( renderable.material.shader.attributes["vTexcoord"], 2, gl.FLOAT, false, 0, 4 * (renderable.mesh.positions.length + renderable.mesh.normals.length) ); // 4 bytes per float, 3 floats per vertex
+
+      gl.enableVertexAttribArray( renderable.material.shader.attributes["vPosition"] );
+      gl.enableVertexAttribArray( renderable.material.shader.attributes["vNormal"] );
+      gl.enableVertexAttribArray( renderable.material.shader.attributes["vTexcoord"] );
 
       // now bind the renderable object's index buffer, and draw.
       gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, renderable.mesh.getEbo() );

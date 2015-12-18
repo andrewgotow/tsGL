@@ -57,21 +57,6 @@ Shader.prototype._buildShader = function () {
 
 }
 
-Shader.prototype._bindProgramInputs = function () {
-  gl.useProgram( this._program );
-
-  //this.in_mvMat = gl.getUniformLocation( this._program, "uModelView");
-  //this.in_proj = gl.getUniformLocation( this._program, "uProjection");
-
-  this.in_pos = gl.getAttribLocation( this._program, "vPosition");
-  this.in_normal = gl.getAttribLocation( this._program, "vNormal");
-
-  gl.enableVertexAttribArray( this.in_pos );
-  gl.enableVertexAttribArray( this.in_normal );
-
-  gl.useProgram(null);
-}
-
 Shader.prototype.useProgram = function () {
   gl.useProgram( this._program );
 }
@@ -95,6 +80,8 @@ Shader.prototype._getAttributes = function () {
 }
 
 Shader.prototype.setUniform = function ( key, value ) {
+  gl.useProgram( this._program );
+
   if ( key in this.uniforms ) {
     var loc = this.uniforms[key];
     switch ( typeOf(value) ) {
@@ -108,9 +95,11 @@ Shader.prototype.setUniform = function ( key, value ) {
           gl.uniform3f( loc, value.x, value.y, value.z );
           break;
         case "Mat4":
-          gl.uniformMatrix4fv( loc, 1, false, value.data );
+          gl.uniformMatrix4fv( loc, false, value.data );
           break;
         case "Texture":
+          gl.activeTexture( gl.TEXTURE0 );
+          gl.bindTexture( gl.TEXTURE_2D, value.getTextureId() );
           gl.uniform1i( loc, value.getTextureId() );
           break;
         default:

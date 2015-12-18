@@ -18,25 +18,23 @@ Quaternion.mult = function ( a, b ) {
   return c;
 }
 
-Quaternion.makeAngleAxis = function ( a, x, y, z ) {
-  var c = new Quaternion();
+Quaternion.makeAngleAxis = function ( a, axis ) {
+  var q = new Quaternion();
 
   // convert angle to radians
   var angle = a * (3.141/180.0);
   var sinAngle = Math.sin( 0.5 * angle );
+  var cosAngle = Math.cos( 0.5 * angle );
 
   // Normallize the vector
-  var magnitude = 1 / Math.sqrt( x*x + y*y + z*z );
-  var xn = x * magnitude;
-  var yn = y * magnitude;
-  var zn = z * magnitude;
+  var nAxis = axis.normalized();
 
-	c.x = ( xn * sinAngle);
-	c.y = ( yn * sinAngle);
-	c.z = ( zn * sinAngle);
-	c.w = Math.cos(angle);
+  q.x = nAxis.x * sinAngle;
+  q.y = nAxis.y * sinAngle;
+  q.z = nAxis.z * sinAngle;
+  q.w = cosAngle;
 
-  return c;
+  return q;
 }
 
 Quaternion.prototype.normalized = function () {

@@ -12,7 +12,7 @@ Material.prototype.useMaterial = function () {
     // bind uniforms from material to match shaders parameters
     for ( var key in this.properties ) {
       if ( this.properties.hasOwnProperty(key) ) {
-        this.shader.setUniform( name, this.properties[key] );
+        this.shader.setUniform( key, this.properties[key] );
       }
     }
   }

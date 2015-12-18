@@ -1,16 +1,22 @@
 #version 100
 precision mediump float;
 
-uniform mat4 uModelView;
+uniform mat4 uModelViewMatrix;
 uniform mat4 uProjection;
+uniform mat4 uNormalMatrix;
 
-attribute vec3 vNormal;
+uniform sampler2D uMainTex;
+
 attribute vec3 vPosition;
-attribute vec2 vUV;
+attribute vec3 vNormal;
+attribute vec2 vTexcoord;
 
-varying vec3 normal;
+varying vec3 fNormal;
+varying vec2 fTexcoord;
 
 void main() {
-  normal = vNormal;
-  gl_Position = uProjection * uModelView * vec4(vPosition,1.0);
+  fNormal = (uNormalMatrix * vec4(vNormal,0)).xyz;
+  fTexcoord = vTexcoord;
+
+  gl_Position = uProjection * uModelViewMatrix * vec4(vPosition,1.0);
 }

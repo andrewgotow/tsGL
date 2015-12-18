@@ -5,11 +5,9 @@ checkTypes:   verify parameter types.       imported from "core-helpers.js"
 */
 
 function System () {
-  //this.registeredComponents = new Array();
 }
 
 System.prototype.tryRegisterComponent = function ( component ) {
-  //checkTypes( [component], ["Component"] );
   return false;
 }
 
@@ -18,9 +16,6 @@ System.prototype.registerComponentsOfEntity = function ( entity ) {
   for (var key in entity.components) {
     if ( entity.components.hasOwnProperty(key) ) {
       this.tryRegisterComponent( entity.components[key] );
-      /*if ( this.shouldRegisterComponent( entity.components[key] ) ) {
-        this.registeredComponents.push( entity.components[key] );
-      }*/
     }
   }
 }
