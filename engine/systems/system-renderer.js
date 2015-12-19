@@ -3,6 +3,7 @@ Renderer.prototype.constructor = Renderer;
 function Renderer () {
   this._renderables = new Array();
   this._cameras = new Array();
+  this._lights = new Array();
 }
 
 Renderer.prototype.tryRegisterComponent = function ( component ) {
@@ -14,11 +15,13 @@ Renderer.prototype.tryRegisterComponent = function ( component ) {
     case "Renderable":
       this._renderables.push( component );
       break;
+    case "Light":
+      this._lights.push( component );
+      break;
     default:
       break;
   }
 }
-
 
 Renderer.prototype.update = function ( dt ) {
   // for every camera in the scene, bind our camera and prepare to render into it.
@@ -28,7 +31,7 @@ Renderer.prototype.update = function ( dt ) {
     var viewMat = Mat4.invert( camera.entity.getComponent("Transform").getMatrix() );
     var projectionMat = camera.getProjection();
 
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clearColor( 0.5, 0.5, 0.5, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
     // now, for every object in the scene,
@@ -75,6 +78,18 @@ Renderer.prototype.update = function ( dt ) {
 
       // now bind the renderable object's index buffer, and draw.
       gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, renderable.mesh.getEbo() );
+
+      // sort the lights based on their calculated "importance"
+      // TODO: This method of sorting may end up calculating importances multiple times.
+      var lights = this._lights.sort( function (a,b) {
+        a.getImportanceForMesh(renderable.mesh) - b.getImportanceForMesh(renderable.mesh)
+      });
+      // loop through each light, starting with the most important light, ending either on
+      // the last light, or 3 lights. Whichever comes first.
+      for ( var l = 0; l < lights.length && l < 3; l ++ ) {
+
+      }
+
       gl.drawElements(gl.TRIANGLES, renderable.mesh.triangles.length, gl.UNSIGNED_SHORT, 0);
     }
   }

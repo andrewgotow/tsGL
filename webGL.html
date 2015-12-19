@@ -7,54 +7,43 @@
     <!-- Debugging Tools and Helpers -->
     <script src="core-helpers.js"></script>
 
-    <!-- Load 3D Math Types -->
-    <script src="math/vector.js"></script>
-    <script src="math/matrix.js"></script>
-    <script src="math/quaternion.js"></script>
-
     <!-- Load WebGL Core -->
     <script src="gl-core/gl.js"></script>
-    <!--
-    <script src="gl-core/shader.js"></script>
-    <script src="gl-core/scene-node.js"></script>
-    <script src="gl-core/scene-node-camera.js"></script>
-    <script src="gl-core/scene-node-mesh.js"></script>
 
-    <script src="cloth/jscloth-constraint.js"></script>
-    <script src="cloth/jscloth-point.js"></script>
-    <script src="cloth/scene-node-cloth.js"></script>
+    <!-- Load 3D Math Types -->
+    <script src="./math/vector.js"></script>
+    <script src="./math/matrix.js"></script>
+    <script src="./math/quaternion.js"></script>
+    <script src="./math/color.js"></script>
 
-    <script src="gl-core/scene.js"></script>
-    -->
+    <!-- Load Asset Definitions -->
+    <script src="./engine/assets/asset.js"></script>
+    <script src="./engine/assets/shader.js"></script>
+    <script src="./engine/assets/texture.js"></script>
+    <script src="./engine/assets/material.js"></script>
+    <script src="./engine/assets/mesh.js"></script>
 
+    <!-- Load Component Definitions -->
+    <script src="./engine/component.js"></script>
+    <script src="./engine/components/component-transform.js"></script>
+    <script src="./engine/components/component-renderable.js"></script>
+    <script src="./engine/components/component-camera.js"></script>
 
-    <!-- Load Engine Asset Definitions -->
-    <script src="engine/assets/asset.js"></script>
-    <script src="engine/assets/shader.js"></script>
-    <script src="engine/assets/texture.js"></script>
-    <script src="engine/assets/material.js"></script>
-    <script src="engine/assets/mesh.js"></script>
+    <!-- Load System Definitions -->
+    <script src="./engine/system.js"></script>
+    <script src="./engine/systems/system-renderer.js"></script>
 
-    <!-- Load Engine Core -->
-    <script src="engine/component.js"></script>
-    <script src="engine/components/component-transform.js"></script>
-    <script src="engine/components/component-renderable.js"></script>
-    <script src="engine/components/component-camera.js"></script>
-
-    <script src="engine/system.js"></script>
-    <script src="engine/systems/system-renderer.js"></script>
-
-    <script src="engine/entity.js"></script>
-    <script src="engine/scene.js"></script>
+    <!-- Load The Rest -->
+    <script src="./engine/entity.js"></script>
+    <script src="./engine/scene.js"></script>
 
     <!-- Load Main -->
     <script src="main.js"></script>
 
-
   </head>
   <body onload="webGLStart(); start();">
     <canvas id="glcanvas" width="800" height="800" style="border: 1px solid gray">
-      It looks like the HTML5 Canvas is not supported on your platform :(
+      It looks like WebGL couldn't be initialized for some reason :(
     </canvas>
   </body>
 </html>
