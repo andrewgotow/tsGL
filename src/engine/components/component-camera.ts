@@ -1,32 +1,42 @@
-Camera.prototype = new Component();
-Camera.prototype.constructor = Camera;
-function Camera ( fov, resolution ) {
-  checkTypes( [fov,resolution], ["number", "Vec3" ] );
+class Camera extends Component {
+  fieldOfView : number;
+  resolution : Vec3;
+  near : number;
+  far : number;
 
-  this.fieldOfView = fov;
-  this.resolution = resolution;
-  this.near = 0.1;
-  this.far = 100;
+  private _projection : Mat4;
+  //private _fbo : WebGLFramebuffer;
+  //private _colorAttachment : WebGLRenderbuffer;
+  //private _depthAttachment : WebGLRenderbuffer;
 
-  this._projection = null;
+  constructor ( fov : number, resolution : Vec3 ) {
+    super();
+    this.fieldOfView = fov;
+    this.resolution = resolution;
+    this.near = 0.1;
+    this.far = 100;
 
-  this._fbo = null;
-  this._colorAttachment = null;
-  this._depthAttachment = null;
+    this._projection = null;
 
-  //this._buildFbo();
-  this._buildProjection();
-}
+    //this._fbo = null;
+    //this._colorAttachment = null;
+    //this._depthAttachment = null;
 
-Camera.prototype._buildProjection = function () {
-  this._projection = Mat4.makePerspective( this.fieldOfView, this.resolution.x / this.resolution.y, this.near, this.far );
-}
-
-Camera.prototype.getProjection = function () {
-  if ( this._projection == null )
+    //this._buildFbo();
     this._buildProjection();
-  return this._projection;
+  }
+
+  private _buildProjection () {
+    this._projection = Mat4.makePerspective( this.fieldOfView, this.resolution.x / this.resolution.y, this.near, this.far );
+  }
+
+  getProjection () : Mat4 {
+    if ( this._projection == null )
+      this._buildProjection();
+    return this._projection;
+  }
 }
+
 
 /*
 Camera.prototype._buildFbo = function () {
@@ -55,7 +65,7 @@ Camera.prototype._destroyFbo = function () {
   gl.deleteRenderbuffer( this._depthAttachment );
 }
 */
-Camera.prototype.useCamera = function () {
+/*Camera.prototype.useCamera = function () {
   //gl.bindFramebuffer( gl.FRAMEBUFFER, this._fbo );
 }
 
@@ -65,4 +75,4 @@ Camera.prototype.blitCamera = function ( windowWidth, windowHeight ) {
   //gl.bindFramebuffer( gl.READ_FRAMEBUFFER, this._fbo );
   //gl.bindFramebuffer( gl.DRAW_FRAMEBUFFER, null );
   //gl.blitFramebuffer( 0, 0, this.resolution.x, this.resolution.y, 0, 0 , windowWidth, windowHeight, gl.COLOR_BUFFER_BIT, gl.NEAREST);
-}
+}*/

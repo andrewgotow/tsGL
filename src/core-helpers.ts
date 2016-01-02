@@ -5,7 +5,7 @@ function uid () {
 }
 
 // from Doug Crockford http://javascript.crockford.com/remedial.html
-function typeOf(value) {
+function typeOf( value: any ) {
   var s = typeof value;
   if (s === 'object') {
     if (value) {
@@ -20,15 +20,7 @@ function typeOf(value) {
   return s;
 }
 
-function checkTypes(argList, typeList) {
-  for (var i = 0; i < typeList.length; i++) {
-    if (typeOf(argList[i]) !== typeList[i]) {
-      throw 'wrong type: expecting ' + typeList[i] + ", found " + typeOf(argList[i]);
-    }
-  }
-}
-
-function loadFile(url, data, callback, errorCallback) {
+function loadFile( url: string, data: any, callback: (text: string, data: any) => any, errorCallback: (url: string) => any ) {
     // Set up an asynchronous request
     var request = new XMLHttpRequest();
     request.open('GET', url, true);
@@ -49,19 +41,19 @@ function loadFile(url, data, callback, errorCallback) {
     request.send(null);
 }
 
-function loadFiles(urls, callback, errorCallback) {
+function loadFiles( urls: string[], callback: ( values: string[] ) => any, errorCallback: (url: string) => any ) {
     var numUrls = urls.length;
     var numComplete = 0;
-    var result = [];
+    var result: string[] = [];
 
     // Callback for a single file
-    function partialCallback(text, urlIndex) {
+    function partialCallback(text: string, urlIndex: number) {
         result[urlIndex] = text;
         numComplete++;
 
         // When all files have downloaded
         if (numComplete == numUrls) {
-            callback(result);
+            callback( result );
         }
     }
 

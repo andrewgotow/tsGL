@@ -1,0 +1,4 @@
+
+class Component {
+  entity : Entity;
+}
