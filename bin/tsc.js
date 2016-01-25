@@ -139,7 +139,6 @@ var Mesh = (function (_super) {
             mesh.normals = new Float32Array(assembledNormals);
             mesh.texcoords = new Float32Array(assembledTexcoords);
             mesh.triangles = new Int16Array(assembledElements);
-            console.log("Finished importing mesh \"" + url + "\"");
             mesh._buildVbo();
             mesh._buildEbo();
             mesh.onReady();
@@ -441,12 +440,19 @@ var Scene = (function () {
     };
     Scene.prototype.addSystem = function (system) {
         this.systems.push(system);
+        for (var id in this.entities) {
+            if (this.entities.hasOwnProperty(id)) {
+                system.registerComponentsOfEntity(this.entities[id]);
+            }
+        }
         return this;
     };
     Scene.prototype.startup = function () {
         this.systems.forEach(function (system, index, array) {
             system.startup();
         });
+        var scene = this;
+        this._updateInterval = setInterval(function () { scene.update(0.03); }, 30);
         return this;
     };
     Scene.prototype.update = function (deltaTime) {
@@ -456,10 +462,24 @@ var Scene = (function () {
         return this;
     };
     Scene.prototype.shutdown = function () {
+        clearInterval(this._updateInterval);
         this.systems.forEach(function (system, index, array) {
             system.shutdown();
         });
         return this;
+    };
+    Scene.loadScene = function (scene) {
+        if (Scene._currentScene != null) {
+            Scene._currentScene.shutdown();
+        }
+        Scene._currentScene = scene;
+        Scene._currentScene.startup();
+    };
+    Scene.loadSceneWithId = function (id) {
+        var element = document.getElementById(id);
+        if (element instanceof TSGLSceneElement) {
+            Scene.loadScene(element.buildScene());
+        }
     };
     return Scene;
 })();
@@ -513,6 +533,14 @@ var Renderer = (function (_super) {
             GL.context.clear(GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT);
             for (var rendIndex = 0; rendIndex < this._renderables.length; rendIndex++) {
                 var renderable = this._renderables[rendIndex];
+                if (renderable.material == null) {
+                    console.warn("Renderable component has no material assigned");
+                    continue;
+                }
+                if (renderable.mesh == null) {
+                    console.warn("Renderable component has no mesh assigned");
+                    continue;
+                }
                 var modelMat = renderable.entity.getComponent("Transform").getMatrix();
                 var modelViewMat = Mat4.mul(modelMat, viewMat);
                 renderable.material.properties["uModelViewMatrix"] = modelViewMat;
@@ -551,60 +579,8 @@ var GL = (function () {
     };
     return GL;
 })();
-var scene = null;
-var body = null;
-var helmet = null;
-var updateInterval = null;
-var camera = null;
-function loadBody() {
-    var mesh = Mesh.fromFile("./assets/models/excalibur_body.obj");
-    body = new Entity();
-    mesh.onReady = function () {
-        var renderable = new Renderable();
-        renderable.material = new Material(new Shader("body shader", "./assets/shaders/test.vert", "./assets/shaders/test.frag"));
-        renderable.material.properties["uMainTex"] = Texture.fromFile("./assets/textures/ExcaliburBody_Diffuse.png");
-        renderable.mesh = mesh;
-        body.addComponent(renderable);
-        body.getComponent("Transform").position.y = -1.0;
-        scene.addEntity(body);
-    };
-}
-function loadHelmet() {
-    var mesh = Mesh.fromFile("./assets/models/excalibur_helmet.obj");
-    helmet = new Entity();
-    mesh.onReady = function () {
-        var renderable = new Renderable();
-        renderable.material = new Material(new Shader("helmet shader", "./assets/shaders/test.vert", "./assets/shaders/test.frag"));
-        renderable.material.properties["uMainTex"] = Texture.fromFile("./assets/textures/ExcaliburHelmet_Diffuse.png");
-        renderable.mesh = mesh;
-        helmet.addComponent(renderable);
-        scene.addEntity(helmet);
-    };
-}
 function start() {
-    scene = new Scene();
-    scene.addSystem(new Renderer());
-    loadBody();
-    loadHelmet();
-    helmet.getComponent("Transform").parent = body.getComponent("Transform");
-    camera = new Entity();
-    camera.addComponent(new Camera(60, new Vec3(100, 100, 0)));
-    camera.getComponent("Transform").position.z = 1;
-    scene.addEntity(camera);
-    scene.startup();
-    var canvas = document.getElementById("glcanvas");
-    canvas.addEventListener("mouseenter", function (e) {
-        updateInterval = setInterval(function () { update(0.03); }, 30);
-    }, false);
-    canvas.addEventListener("mouseleave", function (e) {
-        clearInterval(updateInterval);
-    }, false);
-}
-var time = 0;
-function update(deltaTime) {
-    time += deltaTime;
-    body.getComponent("Transform").rotation = Quaternion.makeAngleAxis(45 * time, new Vec3(0, 1, 0));
-    scene.update(deltaTime);
+    Scene.loadSceneWithId("scene1");
 }
 var Color = (function () {
     function Color(r, g, b, a) {
@@ -900,4 +876,220 @@ var Vec3 = (function () {
     };
     return Vec3;
 })();
+var TSGLMaterialElement = (function (_super) {
+    __extends(TSGLMaterialElement, _super);
+    function TSGLMaterialElement() {
+        _super.apply(this, arguments);
+    }
+    Object.defineProperty(TSGLMaterialElement.prototype, "material", {
+        get: function () {
+            if (this._material == null)
+                this.loadAsset();
+            return this._material;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TSGLMaterialElement.prototype.loadAsset = function () {
+        var shaderAttr = this.attributes.getNamedItem("shader");
+        if (shaderAttr != null) {
+            var shaderElement = document.getElementById(shaderAttr.value);
+            if (shaderElement instanceof TSGLShaderElement) {
+                this._material = new Material(shaderElement.shader);
+                var children = this.children;
+                for (var i = 0; i < children.length; i++) {
+                    var child = children[i];
+                    if (child instanceof TSGLPropertyElement)
+                        this._material.properties[child.key] = child.value;
+                    if (child instanceof TSGLTextureElement)
+                        this._material.properties[child.name] = child.texture;
+                }
+            }
+        }
+    };
+    return TSGLMaterialElement;
+})(HTMLElement);
+var TSGLMeshElement = (function (_super) {
+    __extends(TSGLMeshElement, _super);
+    function TSGLMeshElement() {
+        _super.apply(this, arguments);
+    }
+    Object.defineProperty(TSGLMeshElement.prototype, "mesh", {
+        get: function () {
+            if (this._mesh == null)
+                this.loadAsset();
+            return this._mesh;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TSGLMeshElement.prototype.loadAsset = function () {
+        var srcAttr = this.attributes.getNamedItem("src");
+        if (srcAttr != null) {
+            this._mesh = Mesh.fromFile(srcAttr.value);
+        }
+    };
+    return TSGLMeshElement;
+})(HTMLElement);
+var TSGLPropertyElement = (function (_super) {
+    __extends(TSGLPropertyElement, _super);
+    function TSGLPropertyElement() {
+        _super.apply(this, arguments);
+    }
+    TSGLPropertyElement.prototype.createdCallback = function () {
+        var keyAttr = this.attributes.getNamedItem("name");
+        var valueAttr = this.attributes.getNamedItem("value");
+        if (keyAttr != null && valueAttr != null) {
+            this.key = keyAttr.value;
+            this.value = valueAttr.value;
+        }
+    };
+    return TSGLPropertyElement;
+})(HTMLElement);
+var TSGLShaderElement = (function (_super) {
+    __extends(TSGLShaderElement, _super);
+    function TSGLShaderElement() {
+        _super.apply(this, arguments);
+    }
+    Object.defineProperty(TSGLShaderElement.prototype, "shader", {
+        get: function () {
+            if (this._shader == null)
+                this.loadAsset();
+            return this._shader;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TSGLShaderElement.prototype.loadAsset = function () {
+        var vertSrcAttr = this.attributes.getNamedItem("vert-src");
+        var fragSrcAttr = this.attributes.getNamedItem("frag-src");
+        if (vertSrcAttr != null && fragSrcAttr != null) {
+            this._shader = new Shader("Hello", vertSrcAttr.value, fragSrcAttr.value);
+        }
+    };
+    return TSGLShaderElement;
+})(HTMLElement);
+var TSGLTextureElement = (function (_super) {
+    __extends(TSGLTextureElement, _super);
+    function TSGLTextureElement() {
+        _super.apply(this, arguments);
+    }
+    Object.defineProperty(TSGLTextureElement.prototype, "texture", {
+        get: function () {
+            if (this._texture == null)
+                this.loadAsset();
+            return this._texture;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    TSGLTextureElement.prototype.loadAsset = function () {
+        var srcAttr = this.attributes.getNamedItem("src");
+        if (srcAttr != null) {
+            this._texture = Texture.fromFile(srcAttr.value);
+        }
+    };
+    TSGLTextureElement.prototype.createdCallback = function () {
+        var nameAttr = this.attributes.getNamedItem("name");
+        if (nameAttr != null) {
+            this.name = nameAttr.value;
+        }
+    };
+    return TSGLTextureElement;
+})(HTMLElement);
+var TSGLComponentElement = (function (_super) {
+    __extends(TSGLComponentElement, _super);
+    function TSGLComponentElement() {
+        _super.apply(this, arguments);
+    }
+    TSGLComponentElement.prototype.buildComponent = function () {
+        var typeAttr = this.attributes.getNamedItem("type");
+        if (typeAttr != null) {
+            switch (typeAttr.value) {
+                case "transform":
+                    var transform = new Transform();
+                    transform.position = new Vec3(Number(this.attributes.getNamedItem("x").value), Number(this.attributes.getNamedItem("y").value), Number(this.attributes.getNamedItem("z").value));
+                    return transform;
+                case "renderable":
+                    var renderable = new Renderable();
+                    var meshAttr = this.attributes.getNamedItem("mesh");
+                    if (meshAttr != null) {
+                        var element = document.getElementById(meshAttr.value);
+                        if (element instanceof TSGLMeshElement) {
+                            renderable.mesh = element.mesh;
+                        }
+                    }
+                    var materialAttr = this.attributes.getNamedItem("material");
+                    if (materialAttr != null) {
+                        var element = document.getElementById(materialAttr.value);
+                        if (element instanceof TSGLMaterialElement) {
+                            renderable.material = element.material;
+                        }
+                    }
+                    return renderable;
+                case "camera":
+                    return new Camera(60, new Vec3(100.0, 100.0, 0));
+                default:
+                    console.error("Attempting to instantiate unknown component from DOM Element");
+                    return null;
+            }
+        }
+    };
+    return TSGLComponentElement;
+})(HTMLElement);
+var TSGLEntityElement = (function (_super) {
+    __extends(TSGLEntityElement, _super);
+    function TSGLEntityElement() {
+        _super.apply(this, arguments);
+    }
+    TSGLEntityElement.prototype.buildEntity = function () {
+        var entity = new Entity();
+        var children = this.children;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child instanceof TSGLComponentElement)
+                entity.addComponent(child.buildComponent());
+        }
+        return entity;
+    };
+    return TSGLEntityElement;
+})(HTMLElement);
+var TSGLSceneElement = (function (_super) {
+    __extends(TSGLSceneElement, _super);
+    function TSGLSceneElement() {
+        _super.apply(this, arguments);
+    }
+    TSGLSceneElement.prototype.buildScene = function () {
+        var scene = new Scene();
+        var children = this.children;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child instanceof TSGLEntityElement)
+                scene.addEntity(child.buildEntity());
+            if (child instanceof TSGLSystemElement)
+                scene.addSystem(child.system);
+        }
+        return scene;
+    };
+    return TSGLSceneElement;
+})(HTMLElement);
+var TSGLSystemElement = (function (_super) {
+    __extends(TSGLSystemElement, _super);
+    function TSGLSystemElement() {
+        _super.apply(this, arguments);
+    }
+    TSGLSystemElement.prototype.createdCallback = function () {
+        var typeAttr = this.attributes.getNamedItem("type");
+        if (typeAttr != null) {
+            switch (typeAttr.value) {
+                case "renderer":
+                    this.system = new Renderer();
+                    break;
+                default:
+                    console.error("Attempting to instantiate unknown system from DOM Element");
+            }
+        }
+    };
+    return TSGLSystemElement;
+})(HTMLElement);
 //# sourceMappingURL=tsc.js.map

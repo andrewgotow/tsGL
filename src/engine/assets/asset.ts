@@ -1,4 +1,4 @@
-class Asset {
+abstract class Asset {
   ready : boolean;
   onReady: () => any = function () {};
 }

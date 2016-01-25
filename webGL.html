@@ -5,11 +5,47 @@
     <title>WebGL</title>
 
     <script src="bin/tsc.js"></script>
+    <script src="src/web-components/custom-elements/tsgl-elements.js"></script>
 
   </head>
   <body onload="GL.init( document.getElementById('glcanvas') ); start();">
     <canvas id="glcanvas" width="800" height="800" style="border: 1px solid gray">
-      It looks like WebGL couldn't be initialized for some reason :(
+      It looks like WebGL couldn't be initialized. Ensure your browser supports it :(
     </canvas>
   </body>
 </html>
+
+<!-- Load Assets -->
+<tsgl-shader id="test" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
+
+<tsgl-material id="mat_body" shader="test">
+  <tsgl-texture name="uMainTex" src="/assets/textures/ExcaliburBody_Diffuse.png"></tsgl-texture>
+</tsgl-material>
+
+<tsgl-material id="mat_helm" shader="test">
+  <tsgl-texture name="uMainTex" src="/assets/textures/ExcaliburHelmet_Diffuse.png"></tsgl-texture>
+</tsgl-material>
+
+<tsgl-mesh id="mesh_body" src="/assets/models/excalibur_body.obj"></tsgl-mesh>
+<tsgl-mesh id="mesh_helm" src="/assets/models/excalibur_helmet.obj"></tsgl-mesh>
+
+
+<!-- Load Scene Hierarchy -->
+<tsgl-scene id="scene1">
+  <tsgl-system type="renderer"></tsgl-system>
+
+  <tsgl-entity>
+    <tsgl-component type="camera"></tsgl-component>
+    <tsgl-component type="transform" x="0" y="1" z="3"></tsgl-component>
+  </tsgl-entity>
+
+  <tsgl-entity>
+    <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
+    <tsgl-component type="renderable" mesh="mesh_body" material="mat_body"></tsgl-component>
+  </tsgl-entity>
+
+  <tsgl-entity>
+    <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
+    <tsgl-component type="renderable" mesh="mesh_helm" material="mat_helm"></tsgl-component>
+  </tsgl-entity>
+</tsgl-scene>

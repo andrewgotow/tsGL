@@ -1,7 +1,7 @@
+/*
 var scene : Scene = null;
 var body : Entity = null;
 var helmet : Entity = null;
-var updateInterval : number = null;
 var camera : Entity = null;
 
 function loadBody () {
@@ -30,38 +30,25 @@ function loadHelmet () {
     scene.addEntity( helmet );
   }
 }
+*/
 
 function start () {
+
+  Scene.loadSceneWithId( "scene1" );
   // Init the scene, and its sytems.
-  scene = new Scene();
-  scene.addSystem( new Renderer() );
+  //scene = new Scene();
+  //scene.addSystem( new Renderer() );
 
   // build the body entity, starting by loading the mesh.
-  loadBody();
-  loadHelmet();
-  (<Transform>helmet.getComponent("Transform")).parent = <Transform>body.getComponent( "Transform")
+  //loadBody();
+  //loadHelmet();
+  //(<Transform>helmet.getComponent("Transform")).parent = <Transform>body.getComponent( "Transform")
 
-  camera = new Entity();
-  camera.addComponent( new Camera( 60, new Vec3( 100, 100, 0 ) ) );
-  (<Transform>camera.getComponent( "Transform" )).position.z = 1;
-  scene.addEntity( camera );
+  //camera = new Entity();
+  //camera.addComponent( new Camera( 60, new Vec3( 100, 100, 0 ) ) );
+  //(<Transform>camera.getComponent( "Transform" )).position.z = 1;
+  //scene.addEntity( camera );
 
-  scene.startup();
+  //Scene.loadScene( scene );
 
-  var canvas = document.getElementById( "glcanvas" );
-  canvas.addEventListener("mouseenter", function(e) {
-    updateInterval = setInterval( function(){update(0.03)}, 30 );
-  }, false);
-
-  canvas.addEventListener("mouseleave", function(e) {
-    clearInterval( updateInterval );
-  }, false);
-
-}
-
-var time = 0;
-function update ( deltaTime : number ) {
-  time += deltaTime;
-  (<Transform>body.getComponent("Transform")).rotation = Quaternion.makeAngleAxis( 45 * time, new Vec3(0, 1, 0) );
-  scene.update(deltaTime);
 }

@@ -94,7 +94,7 @@ class Mesh extends Asset {
       mesh.texcoords = new Float32Array( assembledTexcoords );
       mesh.triangles = new Int16Array( assembledElements );
 
-      console.log( "Finished importing mesh \"" + url + "\"");
+      //console.log( "Finished importing mesh \"" + url + "\"");
 
       mesh._buildVbo();
       mesh._buildEbo();

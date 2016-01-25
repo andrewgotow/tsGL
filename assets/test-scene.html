@@ -1,0 +1,26 @@
+<!-- Load Assets -->
+<tsgl-shader id="test" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
+<tsgl-texture id="texture" src="/assets/models/excalibur_body.obj"></tsgl-texture>
+<tsgl-material id="material" shader="test">
+  <tsgl-texture name="uMainTex" src="/assets/models/excalibur_body.obj"></tsgl-texture>
+</tsgl-material>
+
+<tsgl-mesh id="body" src="/assets/models/excalibur_body.obj"></tsgl-mesh>
+<tsgl-mesh id="helmet" src="/assets/models/excalibur_helmet.obj"></tsgl-mesh>
+
+
+<!-- Load Scene Hierarchy -->
+<tsgl-scene id="scene1">
+  <tsgl-system type="renderer"></tsgl-system>
+
+  <tsgl-entity>
+    <tsgl-component type="camera"></tsgl-component>
+    <tsgl-component type="transform" x="0" y="1" z="3"></tsgl-component>
+  </tsgl-entity>
+
+  <tsgl-entity>
+    <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
+    <tsgl-component type="renderable" mesh="body" material="material"></tsgl-component>
+  </tsgl-entity>
+
+</tsgl-scene>

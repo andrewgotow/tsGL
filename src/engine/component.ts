@@ -1,4 +1,3 @@
-
-class Component {
+abstract class Component {
   entity : Entity;
 }

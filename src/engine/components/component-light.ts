@@ -1,5 +1,7 @@
 enum LightType { POINT, DIRECTIONAL };
 
+// TODO: Lighting is currently not used.
+
 class Light extends Component {
 
   color : Color;

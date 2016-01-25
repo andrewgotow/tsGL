@@ -6,11 +6,14 @@ class Entity {
   constructor () {
     this.id = uid();
     this.components = {};
-    this.addComponent( new Transform() );  // entities will always have a transform.
+    // entities will always have a transform.
+    this.addComponent( new Transform() );
   }
 
-  getComponent ( type : string ) : Component {
-    if ( this.components.hasOwnProperty(type) )
+  // TODO: Replace this with a generic implementation which returns already
+  // typecasted components.
+  getComponent ( type: string ) : Component {
+    if ( this.components.hasOwnProperty( type ) )
       return this.components[ type ];
     return null;
   }

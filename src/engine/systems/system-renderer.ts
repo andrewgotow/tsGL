@@ -40,11 +40,7 @@ class Renderer extends System {
         var renderable = this._renderables[rendIndex];
 
         // check that the object is complete.
-        /*if ( renderable.material == null ) {
-          console.warn( "Renderable component has no material assigned" );
-          continue;
-        }
-        if ( renderable.material.ready() == false ) {
+        if ( renderable.material == null ) {
           console.warn( "Renderable component has no material assigned" );
           continue;
         }
@@ -52,11 +48,6 @@ class Renderer extends System {
           console.warn( "Renderable component has no mesh assigned" );
           continue;
         }
-        if ( renderable.mesh.ready() == false ) {
-          console.warn( "Mesh provided to renderable component is not ready to be displayed." );
-          continue;
-        }
-        */
 
         var modelMat = (<Transform>renderable.entity.getComponent("Transform")).getMatrix();
         var modelViewMat = Mat4.mul( modelMat, viewMat );

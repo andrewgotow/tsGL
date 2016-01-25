@@ -1,4 +1,4 @@
-class System {
+abstract class System {
 
   constructor () {}
 
