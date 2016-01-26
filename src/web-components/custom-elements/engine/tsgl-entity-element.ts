@@ -1,23 +1,19 @@
 class TSGLEntityElement extends HTMLElement {
 
+  entity : Entity = null;
+
   buildEntity () : Entity {
-    var entity = new Entity();
+    this.entity = new Entity();
 
     // iterate through child elements. Add them to the scene.
     var children = this.children;
     for ( var i = 0; i < children.length; i ++ ) {
       var child = children[i];
       if ( child instanceof TSGLComponentElement )
-        entity.addComponent( child.buildComponent() );
-
-      // Special case for child entities. Set their transform's parent.
-      //if ( child instanceof TSGLEntityElement ) {
-      //  var childEntity = child.buildEntity();
-      //  (<Transform>childEntity.getComponent("Transform")).parent = <Transform>entity.getComponent("Transform");
-      //}
+        this.entity.addComponent( child.buildComponent() );
     }
 
-    return entity;
+    return this.entity;
   }
 
 }

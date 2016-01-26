@@ -29,7 +29,7 @@ class Light extends Component {
     }
   }
 
-  getMatrix () {
+  getMatrix () : Mat4 {
     var position = (<Transform>this.entity.getComponent("Transform")).position;
     return new Mat4([
       this.color.r,	  0, 0, position.x,

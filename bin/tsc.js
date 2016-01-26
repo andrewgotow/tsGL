@@ -377,6 +377,16 @@ var Renderable = (function (_super) {
         this.material = null;
         this.mesh = null;
     }
+    Renderable.prototype.prepareForDrawing = function () {
+        GL.context.bindBuffer(GL.context.ARRAY_BUFFER, this.mesh.getVbo());
+        GL.context.vertexAttribPointer(this.material.shader.attributes["vPosition"], 3, GL.context.FLOAT, false, 0, 0);
+        GL.context.vertexAttribPointer(this.material.shader.attributes["vNormal"], 3, GL.context.FLOAT, true, 0, 4 * (this.mesh.positions.length));
+        GL.context.vertexAttribPointer(this.material.shader.attributes["vTexcoord"], 2, GL.context.FLOAT, false, 0, 4 * (this.mesh.positions.length + this.mesh.normals.length));
+        GL.context.enableVertexAttribArray(this.material.shader.attributes["vPosition"]);
+        GL.context.enableVertexAttribArray(this.material.shader.attributes["vNormal"]);
+        GL.context.enableVertexAttribArray(this.material.shader.attributes["vTexcoord"]);
+        GL.context.bindBuffer(GL.context.ELEMENT_ARRAY_BUFFER, this.mesh.getEbo());
+    };
     return Renderable;
 })(Component);
 var Transform = (function (_super) {
@@ -419,6 +429,12 @@ var Entity = (function () {
         component.entity = null;
         delete this.components[typeOf(component)];
         return this;
+    };
+    Entity.entityWithId = function (id) {
+        var element = document.getElementById(id);
+        if (element instanceof TSGLEntityElement) {
+            return element.entity;
+        }
     };
     return Entity;
 })();
@@ -532,32 +548,23 @@ var Renderer = (function (_super) {
             GL.context.clearColor(0.5, 0.5, 0.5, 1.0);
             GL.context.clear(GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT);
             for (var rendIndex = 0; rendIndex < this._renderables.length; rendIndex++) {
-                var renderable = this._renderables[rendIndex];
-                if (renderable.material == null) {
-                    console.warn("Renderable component has no material assigned");
-                    continue;
-                }
-                if (renderable.mesh == null) {
-                    console.warn("Renderable component has no mesh assigned");
-                    continue;
-                }
-                var modelMat = renderable.entity.getComponent("Transform").getMatrix();
-                var modelViewMat = Mat4.mul(modelMat, viewMat);
-                renderable.material.properties["uModelViewMatrix"] = modelViewMat;
-                renderable.material.properties["uProjection"] = projectionMat;
-                renderable.material.properties["uNormalMatrix"] = Mat4.transpose(Mat4.invert(modelViewMat));
-                renderable.material.useMaterial();
-                GL.context.bindBuffer(GL.context.ARRAY_BUFFER, renderable.mesh.getVbo());
-                GL.context.vertexAttribPointer(renderable.material.shader.attributes["vPosition"], 3, GL.context.FLOAT, false, 0, 0);
-                GL.context.vertexAttribPointer(renderable.material.shader.attributes["vNormal"], 3, GL.context.FLOAT, true, 0, 4 * (renderable.mesh.positions.length));
-                GL.context.vertexAttribPointer(renderable.material.shader.attributes["vTexcoord"], 2, GL.context.FLOAT, false, 0, 4 * (renderable.mesh.positions.length + renderable.mesh.normals.length));
-                GL.context.enableVertexAttribArray(renderable.material.shader.attributes["vPosition"]);
-                GL.context.enableVertexAttribArray(renderable.material.shader.attributes["vNormal"]);
-                GL.context.enableVertexAttribArray(renderable.material.shader.attributes["vTexcoord"]);
-                GL.context.bindBuffer(GL.context.ELEMENT_ARRAY_BUFFER, renderable.mesh.getEbo());
-                GL.context.drawElements(GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
+                this.drawRenderable(this._renderables[rendIndex], viewMat, projectionMat);
             }
         }
+    };
+    Renderer.prototype.drawRenderable = function (renderable, viewMat, projectionMat) {
+        if (renderable.material == null)
+            return console.warn("Renderable component has no material assigned");
+        if (renderable.mesh == null)
+            return console.warn("Renderable component has no mesh assigned");
+        var modelMat = renderable.entity.getComponent("Transform").getMatrix();
+        var modelViewMat = Mat4.mul(modelMat, viewMat);
+        renderable.material.properties["uModelViewMatrix"] = modelViewMat;
+        renderable.material.properties["uProjection"] = projectionMat;
+        renderable.material.properties["uNormalMatrix"] = Mat4.transpose(Mat4.invert(modelViewMat));
+        renderable.material.useMaterial();
+        renderable.prepareForDrawing();
+        GL.context.drawElements(GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
     };
     return Renderer;
 })(System);
@@ -579,8 +586,19 @@ var GL = (function () {
     };
     return GL;
 })();
+var excalibur_transform = null;
+var time = 0;
 function start() {
     Scene.loadSceneWithId("scene1");
+    Entity.entityWithId("excalibur_body");
+    excalibur_transform = Entity.entityWithId("excalibur_body").getComponent("Transform");
+    var helmet_transform = Entity.entityWithId("excalibur_helmet").getComponent("Transform");
+    helmet_transform.parent = excalibur_transform;
+    setInterval(function () { update(0.03); }, 30);
+}
+function update(dt) {
+    time += dt;
+    excalibur_transform.rotation = Quaternion.makeAngleAxis(6.283 * 5 * time, new Vec3(0, 1, 0));
 }
 var Color = (function () {
     function Color(r, g, b, a) {
@@ -589,6 +607,13 @@ var Color = (function () {
         this.b = b;
         this.a = a;
     }
+    Color.fromHex = function (hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        var r = parseInt(result[1], 16) / 255.0;
+        var g = parseInt(result[2], 16) / 255.0;
+        var b = parseInt(result[3], 16) / 255.0;
+        return new Color(r, g, b, 1.0);
+    };
     Color.add = function (a, b) {
         return new Color(a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a);
     };
@@ -1027,6 +1052,11 @@ var TSGLComponentElement = (function (_super) {
                         }
                     }
                     return renderable;
+                case "light":
+                    var color = Color.fromHex(this.attributes.getNamedItem("color").value);
+                    var intensity = Number(this.attributes.getNamedItem("intensity").value);
+                    var range = Number(this.attributes.getNamedItem("range").value);
+                    return new Light(color, intensity, range);
                 case "camera":
                     return new Camera(60, new Vec3(100.0, 100.0, 0));
                 default:
@@ -1041,16 +1071,17 @@ var TSGLEntityElement = (function (_super) {
     __extends(TSGLEntityElement, _super);
     function TSGLEntityElement() {
         _super.apply(this, arguments);
+        this.entity = null;
     }
     TSGLEntityElement.prototype.buildEntity = function () {
-        var entity = new Entity();
+        this.entity = new Entity();
         var children = this.children;
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
             if (child instanceof TSGLComponentElement)
-                entity.addComponent(child.buildComponent());
+                this.entity.addComponent(child.buildComponent());
         }
-        return entity;
+        return this.entity;
     };
     return TSGLEntityElement;
 })(HTMLElement);
@@ -1058,18 +1089,19 @@ var TSGLSceneElement = (function (_super) {
     __extends(TSGLSceneElement, _super);
     function TSGLSceneElement() {
         _super.apply(this, arguments);
+        this.scene = null;
     }
     TSGLSceneElement.prototype.buildScene = function () {
-        var scene = new Scene();
+        this.scene = new Scene();
         var children = this.children;
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
             if (child instanceof TSGLEntityElement)
-                scene.addEntity(child.buildEntity());
+                this.scene.addEntity(child.buildEntity());
             if (child instanceof TSGLSystemElement)
-                scene.addSystem(child.system);
+                this.scene.addSystem(child.system);
         }
-        return scene;
+        return this.scene;
     };
     return TSGLSceneElement;
 })(HTMLElement);

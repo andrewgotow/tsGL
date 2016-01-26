@@ -29,4 +29,12 @@ class Entity {
     delete this.components[ typeOf(component) ];
     return this;
   }
+
+  static entityWithId ( id : string ) : Entity {
+    var element = document.getElementById( id );
+    if ( element instanceof TSGLEntityElement ) {
+      return element.entity;
+    }
+  }
+
 }

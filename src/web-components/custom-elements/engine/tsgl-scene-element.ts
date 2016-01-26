@@ -1,19 +1,21 @@
 class TSGLSceneElement extends HTMLElement {
 
+  scene : Scene = null;
+
   buildScene () : Scene {
-    var scene = new Scene();
+    this.scene = new Scene();
 
     // iterate through child elements. Add them to the scene.
     var children = this.children;
     for ( var i = 0; i < children.length; i ++ ) {
       var child = children[i];
       if ( child instanceof TSGLEntityElement )
-        scene.addEntity( child.buildEntity() );
+        this.scene.addEntity( child.buildEntity() );
       if ( child instanceof TSGLSystemElement )
-        scene.addSystem( child.system );
+        this.scene.addSystem( child.system );
     }
 
-    return scene;
+    return this.scene;
   }
 
 }

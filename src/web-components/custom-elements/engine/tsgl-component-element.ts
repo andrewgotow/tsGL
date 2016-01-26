@@ -32,6 +32,11 @@ class TSGLComponentElement extends HTMLElement {
           }
 
           return renderable;
+        case "light":
+          var color = Color.fromHex( this.attributes.getNamedItem( "color" ).value );
+          var intensity = Number( this.attributes.getNamedItem( "intensity" ).value );
+          var range = Number( this.attributes.getNamedItem("range").value );
+          return new Light( color, intensity, range );
         case "camera":
           return new Camera( 60, new Vec3(100.0, 100.0, 0) );
         default:
