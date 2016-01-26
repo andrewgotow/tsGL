@@ -24,12 +24,11 @@
       <tsgl-texture name="uMainTex" src="/assets/textures/ExcaliburBody_Diffuse.png"></tsgl-texture>
     </tsgl-material>
 
-    <tsgl-material id="mat_helm" shader="test">
-      <tsgl-texture name="uMainTex" src="/assets/textures/ExcaliburHelmet_Diffuse.png"></tsgl-texture>
+    <tsgl-material id="mat_dragon" shader="test">
+      <tsgl-texture name="uMainTex" src="/assets/textures/marble.png"></tsgl-texture>
     </tsgl-material>
 
-    <tsgl-mesh id="mesh_body" src="/assets/models/excalibur_body.obj"></tsgl-mesh>
-    <tsgl-mesh id="mesh_helm" src="/assets/models/excalibur_helmet.obj"></tsgl-mesh>
+    <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
 
     <!-- Systems -->
     <tsgl-system type="renderer"></tsgl-system>
@@ -37,22 +36,17 @@
     <!-- Entities -->
     <tsgl-entity>
       <tsgl-component type="camera"></tsgl-component>
-      <tsgl-component type="transform" x="0" y="1" z="1"></tsgl-component>
+      <tsgl-component type="transform" x="0" y="0" z="1"></tsgl-component>
     </tsgl-entity>
 
-    <tsgl-entity id="excalibur_body">
+    <tsgl-entity id="dragon">
       <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
-      <tsgl-component type="renderable" mesh="mesh_body" material="mat_body"></tsgl-component>
-    </tsgl-entity>
-
-    <tsgl-entity id="excalibur_helmet">
-      <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
-      <tsgl-component type="renderable" mesh="mesh_helm" material="mat_helm"></tsgl-component>
+      <tsgl-component type="renderable" mesh="mesh_dragon" material="mat_dragon"></tsgl-component>
     </tsgl-entity>
 
     <tsgl-entity>
-      <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
-      <tsgl-component type="light" color="#FF0000" intensity="1" range="10"></tsgl-component>
+      <tsgl-component type="transform" x="1" y="1" z="1"></tsgl-component>
+      <tsgl-component type="light" color="#FFFFFF" intensity="1" range="2"></tsgl-component>
     </tsgl-entity>
 
   </tsgl-scene>

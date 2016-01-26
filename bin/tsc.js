@@ -545,7 +545,7 @@ var Renderer = (function (_super) {
             var camera = this._cameras[camIndex];
             var viewMat = Mat4.invert(camera.entity.getComponent("Transform").getMatrix());
             var projectionMat = camera.getProjection();
-            GL.context.clearColor(0.5, 0.5, 0.5, 1.0);
+            GL.context.clearColor(0.2, 0.2, 0.2, 1.0);
             GL.context.clear(GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT);
             for (var rendIndex = 0; rendIndex < this._renderables.length; rendIndex++) {
                 this.drawRenderable(this._renderables[rendIndex], viewMat, projectionMat);
@@ -562,9 +562,21 @@ var Renderer = (function (_super) {
         renderable.material.properties["uModelViewMatrix"] = modelViewMat;
         renderable.material.properties["uProjection"] = projectionMat;
         renderable.material.properties["uNormalMatrix"] = Mat4.transpose(Mat4.invert(modelViewMat));
+        renderable.material.properties["uLightMatrix"] = Mat4.makeZero();
         renderable.material.useMaterial();
         renderable.prepareForDrawing();
+        GL.context.blendFunc(GL.context.SRC_ALPHA, GL.context.ONE_MINUS_SRC_ALPHA);
         GL.context.drawElements(GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
+        GL.context.blendFunc(GL.context.SRC_ALPHA, GL.context.ONE);
+        var lights = this._lights.sort(function (a, b) {
+            return a.importanceForEntity(renderable.entity) - b.importanceForEntity(renderable.entity);
+        });
+        for (var i = 0; i < Math.min(lights.length, 4); i++) {
+            renderable.material.properties["uLightMatrix"] = lights[i].getMatrix();
+            renderable.material.useMaterial();
+            GL.context.drawElements(GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
+        }
+        GL.context.finish();
     };
     return Renderer;
 })(System);
@@ -581,24 +593,22 @@ var GL = (function () {
         if (GL.context) {
             GL.context.enable(GL.context.DEPTH_TEST);
             GL.context.depthFunc(GL.context.LEQUAL);
+            GL.context.enable(GL.context.BLEND);
             GL.context.viewport(0, 0, canvas.width, canvas.height);
         }
     };
     return GL;
 })();
-var excalibur_transform = null;
+var transform = null;
 var time = 0;
 function start() {
     Scene.loadSceneWithId("scene1");
-    Entity.entityWithId("excalibur_body");
-    excalibur_transform = Entity.entityWithId("excalibur_body").getComponent("Transform");
-    var helmet_transform = Entity.entityWithId("excalibur_helmet").getComponent("Transform");
-    helmet_transform.parent = excalibur_transform;
+    transform = Entity.entityWithId("dragon").getComponent("Transform");
     setInterval(function () { update(0.03); }, 30);
 }
 function update(dt) {
     time += dt;
-    excalibur_transform.rotation = Quaternion.makeAngleAxis(6.283 * 5 * time, new Vec3(0, 1, 0));
+    transform.rotation = Quaternion.makeAngleAxis(6.283 * 2 * time, new Vec3(0, 1, 0));
 }
 var Color = (function () {
     function Color(r, g, b, a) {
