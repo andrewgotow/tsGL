@@ -603,7 +603,7 @@ var transform = null;
 var time = 0;
 function start() {
     Scene.loadSceneWithId("scene1");
-    transform = Entity.entityWithId("dragon").getComponent("Transform");
+    transform = Entity.entityWithId("camera").getComponent("Transform");
     setInterval(function () { update(0.03); }, 30);
 }
 function update(dt) {

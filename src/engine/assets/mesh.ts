@@ -3,7 +3,7 @@ class Mesh extends Asset {
   positions : Float32Array;
   normals : Float32Array;
   texcoords : Float32Array;
-  triangles : Int16Array;
+  triangles : Int32Array;
   _vbo : WebGLBuffer; // vertex buffer object
   _ebo : WebGLBuffer; // element buffer object (used for triangles)
 

@@ -4,7 +4,7 @@ var time : number = 0;
 function start () {
   Scene.loadSceneWithId( "scene1" );
 
-  transform = <Transform>Entity.entityWithId( "dragon" ).getComponent("Transform");
+  transform = <Transform>Entity.entityWithId( "camera" ).getComponent("Transform");
 
   setInterval( function () { update( 0.03 ) }, 30 );
 }
