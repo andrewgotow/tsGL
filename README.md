@@ -1,4 +1,7 @@
 # tsGL
+![](https://github.com/andrewgotow/tsGL/blob/master/screenshots/dragon_turntable.gif)
+
+
 tsGL is a quick experiment in modern web technologies. Built as a platform for WebGL experimentation, it utilizes [TypeScript](http://www.typescriptlang.org/), a superset of standard Javascript to allow for better type management and a more familiar syntax for those of us who are used to C-family languages.
 
 # Architecture

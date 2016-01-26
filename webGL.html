@@ -14,21 +14,18 @@
     </canvas>
   </body>
 
+
+  <!-- Load Assets -->
+  <tsgl-shader id="test" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
+
+  <tsgl-material id="mat_dragon" shader="test">
+    <tsgl-texture name="uMainTex" src="/assets/textures/marble.png"></tsgl-texture>
+  </tsgl-material>
+
+  <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
+
   <!-- Load Scene Hierarchy -->
   <tsgl-scene id="scene1">
-
-    <!-- Load Assets -->
-    <tsgl-shader id="test" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
-
-    <tsgl-material id="mat_body" shader="test">
-      <tsgl-texture name="uMainTex" src="/assets/textures/ExcaliburBody_Diffuse.png"></tsgl-texture>
-    </tsgl-material>
-
-    <tsgl-material id="mat_dragon" shader="test">
-      <tsgl-texture name="uMainTex" src="/assets/textures/marble.png"></tsgl-texture>
-    </tsgl-material>
-
-    <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
 
     <!-- Systems -->
     <tsgl-system type="renderer"></tsgl-system>
