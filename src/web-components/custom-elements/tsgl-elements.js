@@ -25,6 +25,11 @@ document.registerElement( 'tsgl-material', {
   prototype: Object.create( TSGLMaterialElement.prototype, {} )
 });
 
+document.registerElement( 'tsgl-property', {
+  prototype: Object.create( TSGLPropertyElement.prototype, {} )
+});
+
+
 document.registerElement( 'tsgl-mesh', {
   prototype: Object.create( TSGLMeshElement.prototype, {} )
 });

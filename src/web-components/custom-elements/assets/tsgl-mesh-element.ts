@@ -1,6 +1,6 @@
 class TSGLMeshElement extends HTMLElement {
 
-  _mesh : Mesh;
+  private _mesh : Mesh;
   get mesh() : Mesh {
     if ( this._mesh == null )
       this.loadAsset();

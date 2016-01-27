@@ -98,7 +98,9 @@ class Mesh extends Asset {
 
       mesh._buildVbo();
       mesh._buildEbo();
-      mesh.onReady();
+
+      mesh.ready = true;
+      mesh.onReady( mesh );
     }, function ( url: string ) {
       console.error( "Could not download Mesh file, \"" + url + "\"" );
     });
@@ -139,13 +141,13 @@ class Mesh extends Asset {
 
   getVbo () : WebGLBuffer {
     if ( this._vbo == null )
-      console.error( "Attempting to access VBO of Mesh asset before it has been created.");
+      console.warn( "Attempting to access VBO of Mesh asset before it has been created.");
     return this._vbo;
   }
 
   getEbo () : WebGLBuffer {
     if ( this._ebo == null )
-      console.error( "Attempting to access EBO of Mesh asset before it has been created.");
+      console.warn( "Attempting to access EBO of Mesh asset before it has been created.");
     return this._ebo;
   }
 

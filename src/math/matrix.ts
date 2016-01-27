@@ -88,7 +88,7 @@ class Mat4 {
 
   static invert ( mat: Mat4 ): Mat4 {
       var m = mat.data;
-      var inv = new Float32Array(16);
+      var inv = Array(16);
 
       inv[0] = m[5]  * m[10] * m[15] -
               m[5]  * m[11] * m[14] -

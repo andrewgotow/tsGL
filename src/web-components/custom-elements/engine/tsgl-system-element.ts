@@ -1,4 +1,6 @@
-class TSGLSystemElement extends HTMLElement {
+/// <reference path="../tsgl-element.ts"/>
+
+class TSGLSystemElement extends TSGLElement {
 
   system : System;
 

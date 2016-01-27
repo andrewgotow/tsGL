@@ -1,7 +1,7 @@
 class TSGLTextureElement extends HTMLElement {
 
   name : string;
-  _texture : Texture;
+  private _texture : Texture;
   get texture() : Texture {
     if ( this._texture == null )
       this.loadAsset();

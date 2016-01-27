@@ -1,6 +1,6 @@
 class TSGLShaderElement extends HTMLElement {
 
-  _shader : Shader;
+  private _shader : Shader;
   get shader() : Shader {
     if ( this._shader == null )
       this.loadAsset();

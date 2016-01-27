@@ -22,7 +22,9 @@ class Texture extends Asset {
       GL.context.texImage2D( GL.context.TEXTURE_2D, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img );
       GL.context.generateMipmap( GL.context.TEXTURE_2D );
       GL.context.bindTexture( GL.context.TEXTURE_2D, null );
-      tex.onReady();
+
+      tex.ready = true;
+      tex.onReady( tex );
     }
     img.src = tex.url;
     return tex;

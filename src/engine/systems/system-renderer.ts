@@ -37,53 +37,67 @@ class Renderer extends System {
 
       // now, for every object in the scene,
       for ( var rendIndex = 0; rendIndex < this._renderables.length; rendIndex ++ ) {
-        this.drawRenderable( this._renderables[rendIndex], viewMat, projectionMat );
+        try {
+          this._drawRenderable( this._renderables[rendIndex], viewMat, projectionMat );
+        }catch(e) {
+          console.warn( "Failed to draw renderable entity." );
+        }
       }
     }
 
-    // lastly, blit the camera to the screen. this is temporary, because I'm not sure where to put it :P
-    //camera.blitCamera( 200, 200 );
+    GL.context.flush();
   }
 
-  private drawRenderable ( renderable : Renderable, viewMat : Mat4, projectionMat : Mat4 ) {
-    // check that the object is complete.
-    if ( renderable.material == null )
-      return console.warn( "Renderable component has no material assigned" );
-    if ( renderable.mesh == null )
-      return console.warn( "Renderable component has no mesh assigned" );
+  private _drawRenderable ( renderable : Renderable, viewMat : Mat4, projectionMat : Mat4 ) {
+    var mesh = renderable.mesh;
+    var material = renderable.material;
 
+    // make sure both our mesh and material work.
+    if ( !mesh.ready || !material.ready ) {
+      console.warn( "Renderable is not ready for display, but you are drawing it anyway." );
+      return;
+    }
+
+    // calculate the model matrix, and the view matrix.
     var modelMat = (<Transform>renderable.entity.getComponent("Transform")).getMatrix();
     var modelViewMat = Mat4.mul( modelMat, viewMat );
 
     // bind the transformation uniforms necessary to render this object.
-    renderable.material.properties[ "uModelViewMatrix" ] = modelViewMat;
-    renderable.material.properties[ "uProjection" ] = projectionMat;
-    renderable.material.properties[ "uNormalMatrix" ] = Mat4.transpose( Mat4.invert( modelViewMat ) );
-    renderable.material.properties[ "uLightMatrix" ] = Mat4.makeZero();
+    material.properties[ "uModelViewMatrix" ] = modelViewMat;
+    material.properties[ "uProjection" ] = projectionMat;
+    material.properties[ "uNormalMatrix" ] = Mat4.transpose( Mat4.invert( modelViewMat ) );
+    material.properties[ "uLightMatrix" ] = Mat4.makeZero();
+
     // bind the material asset for drawing (also sets uniforms)
     renderable.material.useMaterial();
 
     // Bind the renderable's buffers.
-    renderable.prepareForDrawing();
+    GL.context.bindBuffer( GL.context.ARRAY_BUFFER, mesh.getVbo() );
+    GL.context.vertexAttribPointer( material.shader.attributes["vPosition"], 3, GL.context.FLOAT, false, 0, 0);
+    GL.context.vertexAttribPointer( material.shader.attributes["vNormal"], 3, GL.context.FLOAT, true, 0, 4 * (mesh.positions.length)); // 4 bytes per float, 3 floats per vertex
+    GL.context.vertexAttribPointer( material.shader.attributes["vTexcoord"], 2, GL.context.FLOAT, false, 0, 4 * (mesh.positions.length + mesh.normals.length) ); // 4 bytes per float, 3 floats per vertex
 
+    // now bind the renderable object's index buffer, and draw.
+    GL.context.bindBuffer( GL.context.ELEMENT_ARRAY_BUFFER, mesh.getEbo() );
+
+    // set our blend mode to opaque, and draw the unlit base pass.
     GL.context.blendFunc( GL.context.SRC_ALPHA, GL.context.ONE_MINUS_SRC_ALPHA );
-    GL.context.drawElements( GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0 );
+    GL.context.drawElements( GL.context.TRIANGLES, mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0 );
+
+    // now set our blend mode to additive, and begin to apply our lighting in multiple passes.
     GL.context.blendFunc( GL.context.SRC_ALPHA, GL.context.ONE );
 
     // sort the lights based on their calculated "importance"
-    // TODO: This method of sorting may end up calculating importances multiple times.
     var lights = this._lights.sort( function (a : Light, b : Light ) : number {
       return a.importanceForEntity(renderable.entity) - b.importanceForEntity(renderable.entity);
     });
-    // loop through each light, starting with the most important light, ending either on
-    // the last light, or 3 lights. Whichever comes first.
-    for ( var i = 0; i < Math.min( lights.length, 4 ); i ++ ) {
-      renderable.material.properties[ "uLightMatrix" ] = lights[i].getMatrix();
-      renderable.material.useMaterial();
-      GL.context.drawElements( GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0 );
-    }
 
-    GL.context.finish();
+    // loop through each light, starting with the most important light, ending either on
+    // the last light, or 4 lights. Whichever comes first.
+    for ( var i = 0; i < Math.min( lights.length, 4 ); i ++ ) {
+      material.shader.setUniform( "uLightMatrix", lights[i].getMatrix() );
+      GL.context.drawElements( GL.context.TRIANGLES, mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0 );
+    }
   }
 
 }

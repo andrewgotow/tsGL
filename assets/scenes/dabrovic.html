@@ -1,0 +1,128 @@
+<!-- Load Assets -->
+<section> <!-- Shaders -->
+  <tsgl-shader id="shader_default" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
+</section>
+
+<section> <!-- Textures -->
+  <tsgl-texture id="tex_brick" src="/assets/textures/dabrovic-sponza/brick.png"></tsgl-texture>
+  <tsgl-texture id="tex_trim" src="/assets/textures/dabrovic-sponza/trim.png"></tsgl-texture>
+  <tsgl-texture id="tex_arch" src="/assets/textures/dabrovic-sponza/arch.png"></tsgl-texture>
+  <tsgl-texture id="tex_door" src="/assets/textures/dabrovic-sponza/door.png"></tsgl-texture>
+  <tsgl-texture id="tex_window" src="/assets/textures/dabrovic-sponza/window.png"></tsgl-texture>
+</section>
+
+<section> <!-- Meshes -->
+  <tsgl-mesh id="mesh_arches" src="/assets/models/dabrovic-sponza/arches.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_ceiling" src="/assets/models/dabrovic-sponza/ceiling.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_columns" src="/assets/models/dabrovic-sponza/columns.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_doors" src="/assets/models/dabrovic-sponza/doors.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_exterior" src="/assets/models/dabrovic-sponza/exterior.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_relief" src="/assets/models/dabrovic-sponza/relief.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_trim" src="/assets/models/dabrovic-sponza/trim.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_walls" src="/assets/models/dabrovic-sponza/walls.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_windows" src="/assets/models/dabrovic-sponza/windows.obj"></tsgl-mesh>
+</section>
+
+<section> <!-- Materials -->
+  <tsgl-material id="mat_brick" shader="shader_default">
+    <tsgl-property type="texture" name="uMainTex" value="tex_brick"></tsgl-property>
+  </tsgl-material>
+  <tsgl-material id="mat_trim" shader="shader_default">
+    <tsgl-property type="texture" name="uMainTex" value="tex_trim"></tsgl-property>
+  </tsgl-material>
+  <tsgl-material id="mat_arch" shader="shader_default">
+    <tsgl-property type="texture" name="uMainTex" value="tex_arch"></tsgl-property>
+  </tsgl-material>
+  <tsgl-material id="mat_door" shader="shader_default">
+    <tsgl-property type="texture" name="uMainTex" value="tex_door"></tsgl-property>
+  </tsgl-material>
+  <tsgl-material id="mat_window" shader="shader_default">
+    <tsgl-property type="texture" name="uMainTex" value="tex_window"></tsgl-property>
+  </tsgl-material>
+</section>
+
+<!-- Load Scene Hierarchy -->
+<tsgl-scene id="scene1">
+
+  <!-- Systems -->
+  <tsgl-system type="renderer"></tsgl-system>
+
+  <!-- Entities -->
+  <tsgl-entity id="camera">
+    <tsgl-component type="camera" fov="60" xres="1280" yres="800" ></tsgl-component>
+    <tsgl-component type="transform" x="2" y="2" z="0"></tsgl-component>
+  </tsgl-entity>
+
+  <tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="transform" x="-10" y="2" z="2"></tsgl-component>
+      <tsgl-component type="light" color="#FF8888" intensity="0.5" range="10"></tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="transform" x="0" y="10" z="0"></tsgl-component>
+      <tsgl-component type="light" color="#FFFFFF" intensity="0.4" range="15"></tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="transform" x="10" y="2" z="-2"></tsgl-component>
+      <tsgl-component type="light" color="#8888FF" intensity="0.5" range="10"></tsgl-component>
+    </tsgl-entity>
+  </tsgl-entity>
+
+  <tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_arches"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_arch"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_ceiling"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_brick"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_columns"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_arch"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_doors"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_door"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_exterior"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_brick"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_relief"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_brick"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_trim"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_trim"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_walls"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_brick"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+    <tsgl-entity>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_windows"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_window"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+  </tsgl-entity>
+
+</tsgl-scene>

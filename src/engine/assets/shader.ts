@@ -58,7 +58,9 @@ class Shader extends Asset {
         shader._program = program;
         shader._getUniforms();
         shader._getAttributes();
-        shader.onReady();
+
+        shader.ready = true;
+        shader.onReady( shader );
 
     }, function (url) {
         alert('Failed to download shader program "' + url + '"');
@@ -67,6 +69,9 @@ class Shader extends Asset {
 
   useProgram () {
     GL.context.useProgram( this._program );
+    GL.context.enableVertexAttribArray( this.attributes["vPosition"] );
+    GL.context.enableVertexAttribArray( this.attributes["vNormal"] );
+    GL.context.enableVertexAttribArray( this.attributes["vTexcoord"] );
   }
 
   private _getUniforms () {
@@ -88,6 +93,9 @@ class Shader extends Asset {
   }
 
   setUniform ( key: string, value: any ) {
+    if ( this._program == null )
+      return;
+
     GL.context.useProgram( this._program );
 
     if ( key in this.uniforms ) {
@@ -110,11 +118,16 @@ class Shader extends Asset {
             GL.context.bindTexture( GL.context.TEXTURE_2D, value.getTextureId() );
             GL.context.uniform1i( loc, value.getTextureId() );
             break;
+          case "Cubemap":
+            GL.context.activeTexture( GL.context.TEXTURE1 );
+            GL.context.bindTexture( GL.context.TEXTURE_CUBE_MAP, value.getTextureId() );
+            GL.context.uniform1i( loc, value.getTextureId() );
+            break;
           default:
-            console.error( "Attempting to assign unknown type to shader uniform \"" + key + "\", in shader \"" + this.name + "\"." );
+            console.warn( "Attempting to assign unknown type to shader uniform \"" + key + "\", in shader \"" + this.name + "\"." );
       }
     }else{
-      console.error( "Attempting to assign unknown uniform to shader \"" + key + "\", in shader \"" + this.name + "\"." );
+      console.warn( "Attempting to assign unknown uniform of shader \"" + key + "\", in shader \"" + this.name + "\"." );
     }
   }
 

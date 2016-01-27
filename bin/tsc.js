@@ -54,17 +54,58 @@ function loadFiles(urls, callback, errorCallback) {
 }
 var Asset = (function () {
     function Asset() {
-        this.onReady = function () { };
+        this.ready = false;
+        this.onReady = function (asset) { };
     }
     return Asset;
-})();
+}());
+var Cubemap = (function (_super) {
+    __extends(Cubemap, _super);
+    function Cubemap() {
+        _super.call(this);
+        this._texture = null;
+    }
+    Cubemap.fromFiles = function (urls) {
+        var tex = new Cubemap();
+        tex.urls = urls;
+        tex._texture = GL.context.createTexture();
+        GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, tex._texture);
+        GL.context.texParameteri(GL.context.TEXTURE_CUBE_MAP, GL.context.TEXTURE_MAG_FILTER, GL.context.LINEAR);
+        GL.context.texParameteri(GL.context.TEXTURE_CUBE_MAP, GL.context.TEXTURE_MIN_FILTER, GL.context.LINEAR_MIPMAP_NEAREST);
+        GL.context.texParameteri(GL.context.TEXTURE_CUBE_MAP, GL.context.TEXTURE_WRAP_S, GL.context.REPEAT);
+        GL.context.texParameteri(GL.context.TEXTURE_CUBE_MAP, GL.context.TEXTURE_WRAP_T, GL.context.REPEAT);
+        var numLoaded = 0;
+        for (var face = 0; face < Math.min(6, urls.length); face++) {
+            var img = new Image();
+            img.onload = function () {
+                GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, tex._texture);
+                GL.context.texImage2D(GL.context.TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img);
+                if (++numLoaded == Math.min(6, urls.length))
+                    tex.ready = true;
+                tex.onReady(tex);
+            };
+            img.src = tex.urls[face];
+        }
+        return tex;
+    };
+    Cubemap.prototype._unload = function () {
+        GL.context.deleteTexture(this._texture);
+    };
+    Cubemap.prototype.getTextureId = function () {
+        if (this._texture == null)
+            console.error("Attempting to use Texture asset before it has been loaded.");
+        return this._texture;
+    };
+    return Cubemap;
+}(Asset));
 var Material = (function (_super) {
     __extends(Material, _super);
     function Material(shader) {
         _super.call(this);
         this.shader = shader;
         this.properties = {};
-        this.onReady();
+        this.ready = true;
+        this.onReady(this);
     }
     Material.prototype.useMaterial = function () {
         if (this.shader != null) {
@@ -77,7 +118,7 @@ var Material = (function (_super) {
         }
     };
     return Material;
-})(Asset);
+}(Asset));
 var Mesh = (function (_super) {
     __extends(Mesh, _super);
     function Mesh() {
@@ -141,7 +182,8 @@ var Mesh = (function (_super) {
             mesh.triangles = new Int16Array(assembledElements);
             mesh._buildVbo();
             mesh._buildEbo();
-            mesh.onReady();
+            mesh.ready = true;
+            mesh.onReady(mesh);
         }, function (url) {
             console.error("Could not download Mesh file, \"" + url + "\"");
         });
@@ -168,16 +210,16 @@ var Mesh = (function (_super) {
     };
     Mesh.prototype.getVbo = function () {
         if (this._vbo == null)
-            console.error("Attempting to access VBO of Mesh asset before it has been created.");
+            console.warn("Attempting to access VBO of Mesh asset before it has been created.");
         return this._vbo;
     };
     Mesh.prototype.getEbo = function () {
         if (this._ebo == null)
-            console.error("Attempting to access EBO of Mesh asset before it has been created.");
+            console.warn("Attempting to access EBO of Mesh asset before it has been created.");
         return this._ebo;
     };
     return Mesh;
-})(Asset);
+}(Asset));
 var Shader = (function (_super) {
     __extends(Shader, _super);
     function Shader(name, vertUrl, fragUrl) {
@@ -219,13 +261,17 @@ var Shader = (function (_super) {
             shader._program = program;
             shader._getUniforms();
             shader._getAttributes();
-            shader.onReady();
+            shader.ready = true;
+            shader.onReady(shader);
         }, function (url) {
             alert('Failed to download shader program "' + url + '"');
         });
     };
     Shader.prototype.useProgram = function () {
         GL.context.useProgram(this._program);
+        GL.context.enableVertexAttribArray(this.attributes["vPosition"]);
+        GL.context.enableVertexAttribArray(this.attributes["vNormal"]);
+        GL.context.enableVertexAttribArray(this.attributes["vTexcoord"]);
     };
     Shader.prototype._getUniforms = function () {
         var count = GL.context.getProgramParameter(this._program, GL.context.ACTIVE_UNIFORMS);
@@ -242,6 +288,8 @@ var Shader = (function (_super) {
         }
     };
     Shader.prototype.setUniform = function (key, value) {
+        if (this._program == null)
+            return;
         GL.context.useProgram(this._program);
         if (key in this.uniforms) {
             var loc = this.uniforms[key];
@@ -263,16 +311,21 @@ var Shader = (function (_super) {
                     GL.context.bindTexture(GL.context.TEXTURE_2D, value.getTextureId());
                     GL.context.uniform1i(loc, value.getTextureId());
                     break;
+                case "Cubemap":
+                    GL.context.activeTexture(GL.context.TEXTURE1);
+                    GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, value.getTextureId());
+                    GL.context.uniform1i(loc, value.getTextureId());
+                    break;
                 default:
-                    console.error("Attempting to assign unknown type to shader uniform \"" + key + "\", in shader \"" + this.name + "\".");
+                    console.warn("Attempting to assign unknown type to shader uniform \"" + key + "\", in shader \"" + this.name + "\".");
             }
         }
         else {
-            console.error("Attempting to assign unknown uniform to shader \"" + key + "\", in shader \"" + this.name + "\".");
+            console.warn("Attempting to assign unknown uniform of shader \"" + key + "\", in shader \"" + this.name + "\".");
         }
     };
     return Shader;
-})(Asset);
+}(Asset));
 var Texture = (function (_super) {
     __extends(Texture, _super);
     function Texture() {
@@ -293,7 +346,8 @@ var Texture = (function (_super) {
             GL.context.texImage2D(GL.context.TEXTURE_2D, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img);
             GL.context.generateMipmap(GL.context.TEXTURE_2D);
             GL.context.bindTexture(GL.context.TEXTURE_2D, null);
-            tex.onReady();
+            tex.ready = true;
+            tex.onReady(tex);
         };
         img.src = tex.url;
         return tex;
@@ -307,33 +361,73 @@ var Texture = (function (_super) {
         return this._texture;
     };
     return Texture;
-})(Asset);
+}(Asset));
 var Component = (function () {
     function Component() {
     }
     return Component;
-})();
+}());
 var Camera = (function (_super) {
     __extends(Camera, _super);
-    function Camera(fov, resolution) {
+    function Camera(fov, aspect) {
         _super.call(this);
         this.fieldOfView = fov;
-        this.resolution = resolution;
+        this.aspect = aspect;
         this.near = 0.1;
         this.far = 100;
         this._projection = null;
-        this._buildProjection();
     }
-    Camera.prototype._buildProjection = function () {
-        this._projection = Mat4.makePerspective(this.fieldOfView, this.resolution.x / this.resolution.y, this.near, this.far);
-    };
+    Object.defineProperty(Camera.prototype, "fieldOfView", {
+        get: function () {
+            return this._fieldOfView;
+        },
+        set: function (value) {
+            this._fieldOfView = value;
+            this._projection = null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Camera.prototype, "aspect", {
+        get: function () {
+            return this._aspect;
+        },
+        set: function (value) {
+            this._aspect = value;
+            this._projection = null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Camera.prototype, "near", {
+        get: function () {
+            return this._near;
+        },
+        set: function (value) {
+            this._near = value;
+            this._projection = null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Camera.prototype, "far", {
+        get: function () {
+            return this._far;
+        },
+        set: function (value) {
+            this._far = value;
+            this._projection = null;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Camera.prototype.getProjection = function () {
         if (this._projection == null)
-            this._buildProjection();
+            this._projection = Mat4.makePerspective(this.fieldOfView, this.aspect, this.near, this.far);
         return this._projection;
     };
     return Camera;
-})(Component);
+}(Component));
 var LightType;
 (function (LightType) {
     LightType[LightType["POINT"] = 0] = "POINT";
@@ -369,7 +463,7 @@ var Light = (function (_super) {
         ]);
     };
     return Light;
-})(Component);
+}(Component));
 var Renderable = (function (_super) {
     __extends(Renderable, _super);
     function Renderable() {
@@ -377,18 +471,8 @@ var Renderable = (function (_super) {
         this.material = null;
         this.mesh = null;
     }
-    Renderable.prototype.prepareForDrawing = function () {
-        GL.context.bindBuffer(GL.context.ARRAY_BUFFER, this.mesh.getVbo());
-        GL.context.vertexAttribPointer(this.material.shader.attributes["vPosition"], 3, GL.context.FLOAT, false, 0, 0);
-        GL.context.vertexAttribPointer(this.material.shader.attributes["vNormal"], 3, GL.context.FLOAT, true, 0, 4 * (this.mesh.positions.length));
-        GL.context.vertexAttribPointer(this.material.shader.attributes["vTexcoord"], 2, GL.context.FLOAT, false, 0, 4 * (this.mesh.positions.length + this.mesh.normals.length));
-        GL.context.enableVertexAttribArray(this.material.shader.attributes["vPosition"]);
-        GL.context.enableVertexAttribArray(this.material.shader.attributes["vNormal"]);
-        GL.context.enableVertexAttribArray(this.material.shader.attributes["vTexcoord"]);
-        GL.context.bindBuffer(GL.context.ELEMENT_ARRAY_BUFFER, this.mesh.getEbo());
-    };
     return Renderable;
-})(Component);
+}(Component));
 var Transform = (function (_super) {
     __extends(Transform, _super);
     function Transform() {
@@ -408,7 +492,7 @@ var Transform = (function (_super) {
         return Mat4.mul(Mat4.mul(Mat4.mul(s, r), t), p);
     };
     return Transform;
-})(Component);
+}(Component));
 var Entity = (function () {
     function Entity() {
         this.id = uid();
@@ -437,7 +521,7 @@ var Entity = (function () {
         }
     };
     return Entity;
-})();
+}());
 var Scene = (function () {
     function Scene() {
         this.entities = {};
@@ -498,7 +582,7 @@ var Scene = (function () {
         }
     };
     return Scene;
-})();
+}());
 var System = (function () {
     function System() {
     }
@@ -516,7 +600,7 @@ var System = (function () {
     System.prototype.update = function (deltaTime) { };
     System.prototype.shutdown = function () { };
     return System;
-})();
+}());
 var Renderer = (function (_super) {
     __extends(Renderer, _super);
     function Renderer() {
@@ -548,61 +632,68 @@ var Renderer = (function (_super) {
             GL.context.clearColor(0.2, 0.2, 0.2, 1.0);
             GL.context.clear(GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT);
             for (var rendIndex = 0; rendIndex < this._renderables.length; rendIndex++) {
-                this.drawRenderable(this._renderables[rendIndex], viewMat, projectionMat);
+                try {
+                    this._drawRenderable(this._renderables[rendIndex], viewMat, projectionMat);
+                }
+                catch (e) {
+                    console.warn("Failed to draw renderable entity.");
+                }
             }
         }
+        GL.context.flush();
     };
-    Renderer.prototype.drawRenderable = function (renderable, viewMat, projectionMat) {
-        if (renderable.material == null)
-            return console.warn("Renderable component has no material assigned");
-        if (renderable.mesh == null)
-            return console.warn("Renderable component has no mesh assigned");
+    Renderer.prototype._drawRenderable = function (renderable, viewMat, projectionMat) {
+        var mesh = renderable.mesh;
+        var material = renderable.material;
+        if (!mesh.ready || !material.ready) {
+            console.warn("Renderable is not ready for display, but you are drawing it anyway.");
+            return;
+        }
         var modelMat = renderable.entity.getComponent("Transform").getMatrix();
         var modelViewMat = Mat4.mul(modelMat, viewMat);
-        renderable.material.properties["uModelViewMatrix"] = modelViewMat;
-        renderable.material.properties["uProjection"] = projectionMat;
-        renderable.material.properties["uNormalMatrix"] = Mat4.transpose(Mat4.invert(modelViewMat));
-        renderable.material.properties["uLightMatrix"] = Mat4.makeZero();
+        material.properties["uModelViewMatrix"] = modelViewMat;
+        material.properties["uProjection"] = projectionMat;
+        material.properties["uNormalMatrix"] = Mat4.transpose(Mat4.invert(modelViewMat));
+        material.properties["uLightMatrix"] = Mat4.makeZero();
         renderable.material.useMaterial();
-        renderable.prepareForDrawing();
+        GL.context.bindBuffer(GL.context.ARRAY_BUFFER, mesh.getVbo());
+        GL.context.vertexAttribPointer(material.shader.attributes["vPosition"], 3, GL.context.FLOAT, false, 0, 0);
+        GL.context.vertexAttribPointer(material.shader.attributes["vNormal"], 3, GL.context.FLOAT, true, 0, 4 * (mesh.positions.length));
+        GL.context.vertexAttribPointer(material.shader.attributes["vTexcoord"], 2, GL.context.FLOAT, false, 0, 4 * (mesh.positions.length + mesh.normals.length));
+        GL.context.bindBuffer(GL.context.ELEMENT_ARRAY_BUFFER, mesh.getEbo());
         GL.context.blendFunc(GL.context.SRC_ALPHA, GL.context.ONE_MINUS_SRC_ALPHA);
-        GL.context.drawElements(GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
+        GL.context.drawElements(GL.context.TRIANGLES, mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
         GL.context.blendFunc(GL.context.SRC_ALPHA, GL.context.ONE);
         var lights = this._lights.sort(function (a, b) {
             return a.importanceForEntity(renderable.entity) - b.importanceForEntity(renderable.entity);
         });
         for (var i = 0; i < Math.min(lights.length, 4); i++) {
-            renderable.material.properties["uLightMatrix"] = lights[i].getMatrix();
-            renderable.material.useMaterial();
-            GL.context.drawElements(GL.context.TRIANGLES, renderable.mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
+            material.shader.setUniform("uLightMatrix", lights[i].getMatrix());
+            GL.context.drawElements(GL.context.TRIANGLES, mesh.triangles.length, GL.context.UNSIGNED_SHORT, 0);
         }
-        GL.context.finish();
     };
     return Renderer;
-})(System);
+}(System));
 var GL = (function () {
     function GL() {
     }
     GL.init = function (canvas) {
         try {
             GL.context = canvas.getContext("webgl");
+            GL.context.enable(GL.context.BLEND);
+            GL.context.enable(GL.context.DEPTH_TEST);
+            GL.context.depthFunc(GL.context.LEQUAL);
+            GL.context.viewport(0, 0, canvas.width, canvas.height);
         }
         catch (e) {
             alert("Unable to initialize WebGL. Your browser may not support it.");
         }
-        if (GL.context) {
-            GL.context.enable(GL.context.DEPTH_TEST);
-            GL.context.depthFunc(GL.context.LEQUAL);
-            GL.context.enable(GL.context.BLEND);
-            GL.context.viewport(0, 0, canvas.width, canvas.height);
-        }
     };
     return GL;
-})();
+}());
 var transform = null;
 var time = 0;
 function start() {
-    Scene.loadSceneWithId("scene1");
     transform = Entity.entityWithId("camera").getComponent("Transform");
     setInterval(function () { update(0.03); }, 30);
 }
@@ -634,7 +725,7 @@ var Color = (function () {
         return new Color(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a);
     };
     return Color;
-})();
+}());
 var Mat4 = (function () {
     function Mat4(data) {
         this.data = new Float32Array(data);
@@ -706,7 +797,7 @@ var Mat4 = (function () {
     };
     Mat4.invert = function (mat) {
         var m = mat.data;
-        var inv = new Float32Array(16);
+        var inv = Array(16);
         inv[0] = m[5] * m[10] * m[15] -
             m[5] * m[11] * m[14] -
             m[9] * m[6] * m[15] +
@@ -822,7 +913,7 @@ var Mat4 = (function () {
         ]);
     };
     return Mat4;
-})();
+}());
 var Quaternion = (function () {
     function Quaternion(x, y, z, w) {
         this.x = x;
@@ -869,7 +960,7 @@ var Quaternion = (function () {
         return new Quaternion(q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y, q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z, q1.w * q2.z + q1.z * q2.w + q1.x * q2.y - q1.y * q2.x, q1.w * q2.w - q1.x * q2.z - q1.y * q2.y - q1.z * q2.z);
     };
     return Quaternion;
-})();
+}());
 var Vec3 = (function () {
     function Vec3(x, y, z) {
         this.x = x;
@@ -910,7 +1001,43 @@ var Vec3 = (function () {
         return new Vec3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x);
     };
     return Vec3;
-})();
+}());
+var TSGLElement = (function (_super) {
+    __extends(TSGLElement, _super);
+    function TSGLElement() {
+        _super.apply(this, arguments);
+    }
+    TSGLElement.prototype.getProperties = function () {
+        var properties = {};
+        var elements = this.getElementsByTagName("tsgl-property");
+        for (var i = 0; i < elements.length; i++) {
+            var property = elements[i];
+            properties[property.key] = property.getValue();
+        }
+        return properties;
+    };
+    TSGLElement.buildEntityHierarchy = function (element, parentTransform) {
+        if (parentTransform === void 0) { parentTransform = null; }
+        var returnEntities = [];
+        var transform = null;
+        if (element instanceof TSGLEntityElement) {
+            var entity = element.buildEntity();
+            transform = entity.getComponent("Transform");
+            transform.parent = parentTransform;
+            returnEntities.push(entity);
+        }
+        var children = element.childNodes;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child instanceof HTMLElement) {
+                var childEntities = TSGLElement.buildEntityHierarchy(child, transform);
+                returnEntities = returnEntities.concat(childEntities);
+            }
+        }
+        return returnEntities;
+    };
+    return TSGLElement;
+}(HTMLElement));
 var TSGLMaterialElement = (function (_super) {
     __extends(TSGLMaterialElement, _super);
     function TSGLMaterialElement() {
@@ -928,22 +1055,16 @@ var TSGLMaterialElement = (function (_super) {
     TSGLMaterialElement.prototype.loadAsset = function () {
         var shaderAttr = this.attributes.getNamedItem("shader");
         if (shaderAttr != null) {
-            var shaderElement = document.getElementById(shaderAttr.value);
-            if (shaderElement instanceof TSGLShaderElement) {
-                this._material = new Material(shaderElement.shader);
-                var children = this.children;
-                for (var i = 0; i < children.length; i++) {
-                    var child = children[i];
-                    if (child instanceof TSGLPropertyElement)
-                        this._material.properties[child.key] = child.value;
-                    if (child instanceof TSGLTextureElement)
-                        this._material.properties[child.name] = child.texture;
-                }
+            var element = document.getElementById(shaderAttr.value);
+            if (element instanceof TSGLShaderElement) {
+                this._material = new Material(element.shader);
+                var properties = this.getProperties();
+                this._material.properties = properties;
             }
         }
     };
     return TSGLMaterialElement;
-})(HTMLElement);
+}(TSGLElement));
 var TSGLMeshElement = (function (_super) {
     __extends(TSGLMeshElement, _super);
     function TSGLMeshElement() {
@@ -965,22 +1086,7 @@ var TSGLMeshElement = (function (_super) {
         }
     };
     return TSGLMeshElement;
-})(HTMLElement);
-var TSGLPropertyElement = (function (_super) {
-    __extends(TSGLPropertyElement, _super);
-    function TSGLPropertyElement() {
-        _super.apply(this, arguments);
-    }
-    TSGLPropertyElement.prototype.createdCallback = function () {
-        var keyAttr = this.attributes.getNamedItem("name");
-        var valueAttr = this.attributes.getNamedItem("value");
-        if (keyAttr != null && valueAttr != null) {
-            this.key = keyAttr.value;
-            this.value = valueAttr.value;
-        }
-    };
-    return TSGLPropertyElement;
-})(HTMLElement);
+}(HTMLElement));
 var TSGLShaderElement = (function (_super) {
     __extends(TSGLShaderElement, _super);
     function TSGLShaderElement() {
@@ -1003,7 +1109,7 @@ var TSGLShaderElement = (function (_super) {
         }
     };
     return TSGLShaderElement;
-})(HTMLElement);
+}(HTMLElement));
 var TSGLTextureElement = (function (_super) {
     __extends(TSGLTextureElement, _super);
     function TSGLTextureElement() {
@@ -1031,7 +1137,7 @@ var TSGLTextureElement = (function (_super) {
         }
     };
     return TSGLTextureElement;
-})(HTMLElement);
+}(HTMLElement));
 var TSGLComponentElement = (function (_super) {
     __extends(TSGLComponentElement, _super);
     function TSGLComponentElement() {
@@ -1043,32 +1149,42 @@ var TSGLComponentElement = (function (_super) {
             switch (typeAttr.value) {
                 case "transform":
                     var transform = new Transform();
-                    transform.position = new Vec3(Number(this.attributes.getNamedItem("x").value), Number(this.attributes.getNamedItem("y").value), Number(this.attributes.getNamedItem("z").value));
+                    var properties = this.getProperties();
+                    if ("position" in properties)
+                        transform.position = properties["position"];
+                    if ("x" in properties)
+                        transform.position.x = properties["x"];
+                    if ("y" in properties)
+                        transform.position.y = properties["y"];
+                    if ("z" in properties)
+                        transform.position.z = properties["z"];
                     return transform;
                 case "renderable":
                     var renderable = new Renderable();
-                    var meshAttr = this.attributes.getNamedItem("mesh");
-                    if (meshAttr != null) {
-                        var element = document.getElementById(meshAttr.value);
-                        if (element instanceof TSGLMeshElement) {
-                            renderable.mesh = element.mesh;
-                        }
-                    }
-                    var materialAttr = this.attributes.getNamedItem("material");
-                    if (materialAttr != null) {
-                        var element = document.getElementById(materialAttr.value);
-                        if (element instanceof TSGLMaterialElement) {
-                            renderable.material = element.material;
-                        }
-                    }
+                    var properties = this.getProperties();
+                    if ("mesh" in properties)
+                        renderable.mesh = properties["mesh"];
+                    if ("material" in properties)
+                        renderable.material = properties["material"];
                     return renderable;
                 case "light":
-                    var color = Color.fromHex(this.attributes.getNamedItem("color").value);
-                    var intensity = Number(this.attributes.getNamedItem("intensity").value);
-                    var range = Number(this.attributes.getNamedItem("range").value);
-                    return new Light(color, intensity, range);
+                    var light = new Light(new Color(1, 1, 1, 1), 1.0, 10.0);
+                    var properties = this.getProperties();
+                    if ("color" in properties)
+                        light.color = properties["color"];
+                    if ("intensity" in properties)
+                        light.intensity = properties["intensity"];
+                    if ("range" in properties)
+                        light.range = properties["range"];
+                    return light;
                 case "camera":
-                    return new Camera(60, new Vec3(100.0, 100.0, 0));
+                    var camera = new Camera(60, 1.777);
+                    var properties = this.getProperties();
+                    if ("fov" in properties)
+                        camera.fieldOfView = properties["fov"];
+                    if ("aspect" in properties)
+                        camera.aspect = properties["aspect"];
+                    return camera;
                 default:
                     console.error("Attempting to instantiate unknown component from DOM Element");
                     return null;
@@ -1076,7 +1192,7 @@ var TSGLComponentElement = (function (_super) {
         }
     };
     return TSGLComponentElement;
-})(HTMLElement);
+}(TSGLElement));
 var TSGLEntityElement = (function (_super) {
     __extends(TSGLEntityElement, _super);
     function TSGLEntityElement() {
@@ -1094,7 +1210,62 @@ var TSGLEntityElement = (function (_super) {
         return this.entity;
     };
     return TSGLEntityElement;
-})(HTMLElement);
+}(TSGLElement));
+var TSGLPropertyElement = (function (_super) {
+    __extends(TSGLPropertyElement, _super);
+    function TSGLPropertyElement() {
+        _super.apply(this, arguments);
+        this.type = null;
+        this.key = null;
+        this.value = null;
+    }
+    TSGLPropertyElement.prototype.createdCallback = function () {
+        var typeAttr = this.attributes.getNamedItem("type");
+        if (typeAttr != null)
+            this.type = typeAttr.value;
+        var keyAttr = this.attributes.getNamedItem("name");
+        if (keyAttr != null)
+            this.key = keyAttr.value;
+    };
+    TSGLPropertyElement.prototype.getValue = function () {
+        if (this.value != null)
+            return this.value;
+        var valueAttr = this.attributes.getNamedItem("value");
+        if (valueAttr != null) {
+            switch (this.type) {
+                case "number":
+                    this.value = Number(valueAttr.value);
+                    break;
+                case "vector":
+                    var components = valueAttr.value.split(/[,\s]/);
+                    this.value = new Vec3(Number(components[0]), Number(components[1]), Number(components[2]));
+                    break;
+                case "color":
+                    this.value = Color.fromHex(valueAttr.value);
+                    break;
+                case "material":
+                    var element = document.getElementById(valueAttr.value);
+                    if (element instanceof TSGLMaterialElement)
+                        this.value = element.material;
+                    break;
+                case "mesh":
+                    var element = document.getElementById(valueAttr.value);
+                    if (element instanceof TSGLMeshElement)
+                        this.value = element.mesh;
+                    break;
+                case "texture":
+                    var element = document.getElementById(valueAttr.value);
+                    if (element instanceof TSGLTextureElement)
+                        this.value = element.texture;
+                    break;
+                default:
+                    console.warn("tsgl-property element defined with unknown type: " + this.type);
+            }
+            return this.value;
+        }
+    };
+    return TSGLPropertyElement;
+}(HTMLElement));
 var TSGLSceneElement = (function (_super) {
     __extends(TSGLSceneElement, _super);
     function TSGLSceneElement() {
@@ -1106,15 +1277,17 @@ var TSGLSceneElement = (function (_super) {
         var children = this.children;
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
-            if (child instanceof TSGLEntityElement)
-                this.scene.addEntity(child.buildEntity());
             if (child instanceof TSGLSystemElement)
                 this.scene.addSystem(child.system);
+        }
+        var entities = TSGLElement.buildEntityHierarchy(this);
+        for (var i = 0; i < entities.length; i++) {
+            this.scene.addEntity(entities[i]);
         }
         return this.scene;
     };
     return TSGLSceneElement;
-})(HTMLElement);
+}(TSGLElement));
 var TSGLSystemElement = (function (_super) {
     __extends(TSGLSystemElement, _super);
     function TSGLSystemElement() {
@@ -1133,5 +1306,5 @@ var TSGLSystemElement = (function (_super) {
         }
     };
     return TSGLSystemElement;
-})(HTMLElement);
+}(TSGLElement));
 //# sourceMappingURL=tsc.js.map

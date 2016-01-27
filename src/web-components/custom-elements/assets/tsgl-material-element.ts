@@ -1,6 +1,8 @@
-class TSGLMaterialElement extends HTMLElement {
+/// <reference path="../tsgl-element.ts"/>
 
-  _material : Material;
+class TSGLMaterialElement extends TSGLElement {
+
+  private _material : Material;
   get material():Material {
     if ( this._material == null )
       this.loadAsset();
@@ -10,26 +12,14 @@ class TSGLMaterialElement extends HTMLElement {
   loadAsset () {
     var shaderAttr = this.attributes.getNamedItem( "shader" );
     if ( shaderAttr != null ) {
-      var shaderElement = document.getElementById( shaderAttr.value );
-      if ( shaderElement instanceof TSGLShaderElement ) {
-        this._material = new Material( shaderElement.shader );
+      var element = document.getElementById( shaderAttr.value );
+      if ( element instanceof TSGLShaderElement ) {
+        this._material = new Material( element.shader );
 
-        // load child property elements.
-        var children = this.children;
-        for ( var i = 0; i < children.length; i ++ ) {
-          var child = children[i];
-          if ( child instanceof TSGLPropertyElement )
-            this._material.properties[ child.key ] = child.value;
-          if ( child instanceof TSGLTextureElement )
-            this._material.properties[ child.name ] = child.texture;
-        }
+        var properties = this.getProperties();
+        this._material.properties = properties;
       }
     }
   }
-
-  /*
-  createdCallback () {
-
-  }
-  */
+  
 }

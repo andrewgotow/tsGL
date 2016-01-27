@@ -8,7 +8,7 @@
     <script src="src/web-components/custom-elements/tsgl-elements.js"></script>
 
   </head>
-  <body onload="GL.init( document.getElementById('glcanvas') ); start();">
+  <body onload="GL.init( document.getElementById('glcanvas') ); Scene.loadSceneWithId( 'dragon-scene' )">
     <canvas id="glcanvas" width="800" height="800" style="border: 1px solid gray">
       It looks like WebGL couldn't be initialized. Ensure your browser supports it :(
     </canvas>
@@ -16,34 +16,44 @@
 
 
   <!-- Load Assets -->
-  <tsgl-shader id="test" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
-
-  <tsgl-material id="mat_dragon" shader="test">
-    <tsgl-texture name="uMainTex" src="/assets/textures/marble.png"></tsgl-texture>
+  <tsgl-shader id="shader_default" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
+  <tsgl-texture id="tex_marble" src="/assets/textures/marble.png"></tsgl-texture>
+  <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
+  <tsgl-material id="mat_dragon" shader="shader_default">
+    <tsgl-property type="texture" name="uMainTex" value="tex_marble"></tsgl-property>
   </tsgl-material>
 
-  <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
-
   <!-- Load Scene Hierarchy -->
-  <tsgl-scene id="scene1">
-
+  <tsgl-scene id="dragon-scene">
     <!-- Systems -->
     <tsgl-system type="renderer"></tsgl-system>
 
     <!-- Entities -->
     <tsgl-entity id="camera">
-      <tsgl-component type="camera"></tsgl-component>
-      <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
-    </tsgl-entity>
-
-    <tsgl-entity id="dragon">
-      <tsgl-component type="transform" x="0" y="0" z="0"></tsgl-component>
-      <tsgl-component type="renderable" mesh="mesh_dragon" material="mat_dragon"></tsgl-component>
+      <tsgl-component type="camera">
+        <tsgl-property type="number" name="fov" value="60"></tsgl-property>
+        <tsgl-property type="number" name="aspect" value="1"></tsgl-property>
+      </tsgl-component>
+      <tsgl-component type="transform">
+        <tsgl-property type="vector" name="position" value="0 0 1"></tsgl-property>
+      </tsgl-component>
     </tsgl-entity>
 
     <tsgl-entity>
-      <tsgl-component type="transform" x="1" y="1" z="1"></tsgl-component>
-      <tsgl-component type="light" color="#FFFFFF" intensity="1" range="2"></tsgl-component>
+      <tsgl-component type="renderable">
+        <tsgl-property type="mesh" name="mesh" value="mesh_dragon"></tsgl-property>
+        <tsgl-property type="material" name="material" value="mat_dragon"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+
+    <tsgl-entity>
+      <tsgl-component type="transform">
+        <tsgl-property type="vector" name="position" value="1 1 1"></tsgl-property>
+      </tsgl-component>
+      <tsgl-component type="light">
+        <tsgl-property type="color" name="color" value="#FFFFFF"></tsgl-property>
+        <tsgl-property type="number" name="range" value="4"></tsgl-property>
+      </tsgl-component>
     </tsgl-entity>
 
   </tsgl-scene>

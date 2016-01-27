@@ -6,7 +6,9 @@ class Material extends Asset {
     super();
     this.shader = shader;
     this.properties = {};
-    this.onReady();
+
+    this.ready = true;
+    this.onReady( this );
   }
 
   useMaterial () {

@@ -1,4 +1,6 @@
-class TSGLEntityElement extends HTMLElement {
+/// <reference path="../tsgl-element.ts"/>
+
+class TSGLEntityElement extends TSGLElement {
 
   entity : Entity = null;
 

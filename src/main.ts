@@ -2,7 +2,7 @@ var transform : Transform = null;
 var time : number = 0;
 
 function start () {
-  Scene.loadSceneWithId( "scene1" );
+  //Scene.loadSceneWithId( "scene1" );
 
   transform = <Transform>Entity.entityWithId( "camera" ).getComponent("Transform");
 

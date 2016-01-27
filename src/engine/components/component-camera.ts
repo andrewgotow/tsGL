@@ -1,18 +1,61 @@
 class Camera extends Component {
-  fieldOfView : number;
-  resolution : Vec3;
-  near : number;
-  far : number;
 
+  // All camera properties are defined as private members with publicly exposed
+  // getters and setters. This allows us to quickly invalidate the projection matrix
+  // whenever one of the important attributes is changed.
+  private _fieldOfView : number;
+  get fieldOfView() : number {
+    return this._fieldOfView;
+  }
+  set fieldOfView( value : number ) {
+    this._fieldOfView = value;
+    this._projection = null;
+  }
+
+  // aspect ratio of the camera. this is used when building the projection matrix
+  // to ensure that objects appear correctly when converted to normalized view-space.
+  private _aspect : number;
+  get aspect() : number {
+    return this._aspect;
+  }
+  set aspect( value : number ) {
+    this._aspect = value;
+    this._projection = null;
+  }
+
+  // near clipping plane, the minimum distance of an object before it is culled
+  private _near : number;
+  get near() : number {
+    return this._near;
+  }
+  set near( value : number ) {
+    this._near = value;
+    this._projection = null;
+  }
+
+  // far clipping plane, the maximum distance of an object before it is culled.
+  private _far : number;
+  get far() : number {
+    return this._far;
+  }
+  set far( value : number ) {
+    this._far = value;
+    this._projection = null;
+  }
+
+  // projection matrix. This is computed once, and stored, as it shouldn't changed
+  // unless something like Field of View changes. This matrix is set to null whenever
+  // one of these variables is changed, and is recalculated when requested.
   private _projection : Mat4;
+
   //private _fbo : WebGLFramebuffer;
   //private _colorAttachment : WebGLRenderbuffer;
   //private _depthAttachment : WebGLRenderbuffer;
 
-  constructor ( fov : number, resolution : Vec3 ) {
+  constructor ( fov : number, aspect : number ) {
     super();
     this.fieldOfView = fov;
-    this.resolution = resolution;
+    this.aspect = aspect;
     this.near = 0.1;
     this.far = 100;
 
@@ -23,16 +66,11 @@ class Camera extends Component {
     //this._depthAttachment = null;
 
     //this._buildFbo();
-    this._buildProjection();
-  }
-
-  private _buildProjection () {
-    this._projection = Mat4.makePerspective( this.fieldOfView, this.resolution.x / this.resolution.y, this.near, this.far );
   }
 
   getProjection () : Mat4 {
     if ( this._projection == null )
-      this._buildProjection();
+      this._projection = Mat4.makePerspective( this.fieldOfView, this.aspect, this.near, this.far );
     return this._projection;
   }
 }
