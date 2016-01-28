@@ -8,23 +8,46 @@
     <script src="src/web-components/custom-elements/tsgl-elements.js"></script>
 
   </head>
-  <body onload="GL.init( document.getElementById('glcanvas') ); Scene.loadSceneWithId( 'dabrovic-scene' ); start();">
+  <body onload="onDocumentLoad();">
     <canvas id="glcanvas" width="1280" height="800" style="border: 1px solid gray">
       It looks like WebGL couldn't be initialized. Ensure your browser supports it :(
     </canvas>
   </body>
 
+  <script>
+    function onDocumentLoad () {
+      GL.init( document.getElementById('glcanvas') );
+      registerTSGLElements();
+      window.setTimeout( function () {
+        Scene.loadSceneWithId( 'dabrovic-scene' );
+        start();
+      }, 3000 );
+    }
+  </script>
+
   <!-- Load Assets -->
   <section> <!-- Shaders -->
-    <tsgl-shader id="shader_default" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
+    <tsgl-shader id="shader_default" vert-src="/assets/shaders/default.vert" frag-src="/assets/shaders/default.frag"></tsgl-shader>
+    <tsgl-shader id="shader_reflective" vert-src="/assets/shaders/reflective.vert" frag-src="/assets/shaders/reflective.frag"></tsgl-shader>
   </section>
 
   <section> <!-- Textures -->
     <tsgl-texture id="tex_brick" src="/assets/textures/dabrovic-sponza/brick.png"></tsgl-texture>
     <tsgl-texture id="tex_trim" src="/assets/textures/dabrovic-sponza/trim.png"></tsgl-texture>
+    <tsgl-texture id="tex_relief" src="/assets/textures/dabrovic-sponza/relief.png"></tsgl-texture>
     <tsgl-texture id="tex_arch" src="/assets/textures/dabrovic-sponza/arch.png"></tsgl-texture>
     <tsgl-texture id="tex_door" src="/assets/textures/dabrovic-sponza/door.png"></tsgl-texture>
     <tsgl-texture id="tex_window" src="/assets/textures/dabrovic-sponza/window.png"></tsgl-texture>
+
+    <tsgl-cubemap id="tex_environment"
+      left-src="/assets/textures/cubemap/left.png"
+      right-src="/assets/textures/cubemap/right.png"
+      top-src="/assets/textures/cubemap/top.png"
+      bottom-src="/assets/textures/cubemap/bottom.png"
+      front-src="/assets/textures/cubemap/front.png"
+      back-src="/assets/textures/cubemap/back.png"
+    ></tsgl-texture>
+
   </section>
 
   <section> <!-- Meshes -->
@@ -40,8 +63,9 @@
   </section>
 
   <section> <!-- Materials -->
-    <tsgl-material id="mat_brick" shader="shader_default">
+    <tsgl-material id="mat_brick" shader="shader_reflective">
       <tsgl-property type="texture" name="uMainTex" value="tex_brick"></tsgl-property>
+      <tsgl-property type="cubemap" name="uEnvTex" value="tex_environment"></tsgl-property>
     </tsgl-material>
     <tsgl-material id="mat_trim" shader="shader_default">
       <tsgl-property type="texture" name="uMainTex" value="tex_trim"></tsgl-property>
@@ -55,6 +79,9 @@
     <tsgl-material id="mat_window" shader="shader_default">
       <tsgl-property type="texture" name="uMainTex" value="tex_window"></tsgl-property>
     </tsgl-material>
+    <tsgl-material id="mat_relief" shader="shader_default">
+      <tsgl-property type="texture" name="uMainTex" value="tex_relief"></tsgl-property>
+    </tsgl-material>
   </section>
 
   <!-- Load Scene Hierarchy -->
@@ -63,7 +90,6 @@
     <!-- Systems -->
     <tsgl-system type="renderer"></tsgl-system>
 
-    <!-- Entities -->
     <tsgl-entity id="camera">
       <tsgl-component type="camera">
         <tsgl-property type="number" name="fov" value="80"></tsgl-property>
@@ -74,6 +100,7 @@
       </tsgl-component>
     </tsgl-entity>
 
+    <!-- Lights -->
     <tsgl-entity>
       <tsgl-entity>
         <tsgl-component type="transform">
@@ -91,8 +118,8 @@
         </tsgl-component>
         <tsgl-component type="light">
           <tsgl-property type="color" name="color" value="#FFFFFF"></tsgl-property>
-          <tsgl-property type="number" name="intensity" value="0.4"></tsgl-property>
-          <tsgl-property type="number" name="range" value="15"></tsgl-property>
+          <tsgl-property type="number" name="intensity" value="0.6"></tsgl-property>
+          <tsgl-property type="number" name="range" value="30"></tsgl-property>
         </tsgl-component>
       </tsgl-entity>
       <tsgl-entity>
@@ -107,6 +134,7 @@
       </tsgl-entity>
     </tsgl-entity>
 
+    <!-- Geometry -->
     <tsgl-entity>
       <tsgl-entity>
         <tsgl-component type="renderable">
@@ -141,7 +169,7 @@
       <tsgl-entity>
         <tsgl-component type="renderable">
           <tsgl-property type="mesh" name="mesh" value="mesh_relief"></tsgl-property>
-          <tsgl-property type="material" name="material" value="mat_brick"></tsgl-property>
+          <tsgl-property type="material" name="material" value="mat_relief"></tsgl-property>
         </tsgl-component>
       </tsgl-entity>
       <tsgl-entity>

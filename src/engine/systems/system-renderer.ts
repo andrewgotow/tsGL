@@ -32,16 +32,16 @@ class Renderer extends System {
       var viewMat = Mat4.invert( (<Transform>camera.entity.getComponent("Transform")).getMatrix() );
       var projectionMat = camera.getProjection();
 
-      GL.context.clearColor( 0.2, 0.2, 0.2, 1.0 );
+      GL.context.clearColor( 0.1, 0.1, 0.1, 0.0 );
       GL.context.clear( GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT );
 
       // now, for every object in the scene,
       for ( var rendIndex = 0; rendIndex < this._renderables.length; rendIndex ++ ) {
-        try {
+        //try {
           this._drawRenderable( this._renderables[rendIndex], viewMat, projectionMat );
-        }catch(e) {
-          console.warn( "Failed to draw renderable entity." );
-        }
+        //}catch(e) {
+        //  console.warn( "Failed to draw renderable entity." );
+        //}
       }
     }
 

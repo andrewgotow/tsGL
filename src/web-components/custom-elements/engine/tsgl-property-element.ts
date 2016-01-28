@@ -49,6 +49,11 @@ class TSGLPropertyElement extends HTMLElement {
           if ( element instanceof TSGLTextureElement )
             this.value = element.texture;
           break;
+        case "cubemap":
+          var element = document.getElementById( valueAttr.value );
+          if ( element instanceof TSGLCubemapElement )
+            this.value = element.cubemap;
+          break;
         default:
           console.warn( "tsgl-property element defined with unknown type: " + this.type );
       }

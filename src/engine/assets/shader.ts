@@ -5,6 +5,7 @@ class Shader extends Asset {
   fragUrl: string;
   attributes: { [name: string]: number };
   uniforms: { [name:string]: WebGLUniformLocation };
+  private _texUnitMap : { [name:string]: number };
   private _program: WebGLProgram = null;
 
   constructor( name: string, vertUrl: string, fragUrl: string ) {
@@ -16,6 +17,7 @@ class Shader extends Asset {
     // shader name / location maps.
     this.attributes = {};
     this.uniforms = {};
+    this._texUnitMap = {};
 
     // build the actual OpenGL shader object.
     this._program = null;
@@ -92,6 +94,17 @@ class Shader extends Asset {
     }
   }
 
+  private _texUnitForName ( name: string ) {
+    if ( !(name in this._texUnitMap) ) {
+      this._texUnitMap[name] = 0;
+      for( var key in this._texUnitMap ) {
+        if ( key != name )
+          this._texUnitMap[name] ++;
+      }
+    }
+    return this._texUnitMap[name];
+  }
+
   setUniform ( key: string, value: any ) {
     if ( this._program == null )
       return;
@@ -114,14 +127,21 @@ class Shader extends Asset {
             GL.context.uniformMatrix4fv( loc, false, value.data );
             break;
           case "Texture":
-            GL.context.activeTexture( GL.context.TEXTURE0 );
-            GL.context.bindTexture( GL.context.TEXTURE_2D, value.getTextureId() );
-            GL.context.uniform1i( loc, value.getTextureId() );
+            if ( value.ready ) {
+              var texUnit = this._texUnitForName( key );
+              GL.context.uniform1i( loc, texUnit );
+              GL.context.activeTexture( GL.context.TEXTURE0 + texUnit );
+              GL.context.bindTexture( GL.context.TEXTURE_2D, value.textureId );
+            }
+
             break;
           case "Cubemap":
-            GL.context.activeTexture( GL.context.TEXTURE1 );
-            GL.context.bindTexture( GL.context.TEXTURE_CUBE_MAP, value.getTextureId() );
-            GL.context.uniform1i( loc, value.getTextureId() );
+            if ( value.ready ) {
+              var texUnit = this._texUnitForName( key );
+              GL.context.uniform1i( loc, texUnit );
+              GL.context.activeTexture( GL.context.TEXTURE0 + texUnit );
+              GL.context.bindTexture( GL.context.TEXTURE_CUBE_MAP, value.textureId );
+            }
             break;
           default:
             console.warn( "Attempting to assign unknown type to shader uniform \"" + key + "\", in shader \"" + this.name + "\"." );

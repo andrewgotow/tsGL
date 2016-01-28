@@ -1,20 +1,18 @@
 class Texture extends Asset {
-  url : string;
-  private _texture : WebGLTexture;
+  textureId : WebGLTexture;
 
   constructor () {
     super();
-    this._texture = null;
+    this.textureId = null;
   }
 
   static fromFile ( url: string ) : Texture {
     var tex = new Texture();
-    tex.url = url;
-    tex._texture = GL.context.createTexture();
+    tex.textureId = GL.context.createTexture();
 
     var img = new Image();
     img.onload = function() {
-      GL.context.bindTexture( GL.context.TEXTURE_2D, tex._texture );
+      GL.context.bindTexture( GL.context.TEXTURE_2D, tex.textureId );
       GL.context.texParameteri( GL.context.TEXTURE_2D, GL.context.TEXTURE_MAG_FILTER, GL.context.LINEAR );
       GL.context.texParameteri( GL.context.TEXTURE_2D, GL.context.TEXTURE_MIN_FILTER, GL.context.LINEAR_MIPMAP_NEAREST );
       GL.context.texParameteri( GL.context.TEXTURE_2D, GL.context.TEXTURE_WRAP_S, GL.context.REPEAT );
@@ -26,18 +24,12 @@ class Texture extends Asset {
       tex.ready = true;
       tex.onReady( tex );
     }
-    img.src = tex.url;
+    img.src = url;
     return tex;
   }
 
   private _unload () {
-    GL.context.deleteTexture( this._texture );
-  }
-
-  getTextureId () : WebGLTexture {
-    if ( this._texture == null )
-      console.error( "Attempting to use Texture asset before it has been loaded.")
-    return this._texture;
+    GL.context.deleteTexture( this.textureId );
   }
 
 }

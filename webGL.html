@@ -8,19 +8,50 @@
     <script src="src/web-components/custom-elements/tsgl-elements.js"></script>
 
   </head>
-  <body onload="GL.init( document.getElementById('glcanvas') ); Scene.loadSceneWithId( 'dragon-scene' )">
+  <body onload="onDocumentLoad()">
     <canvas id="glcanvas" width="800" height="800" style="border: 1px solid gray">
       It looks like WebGL couldn't be initialized. Ensure your browser supports it :(
     </canvas>
   </body>
 
+  <script>
+    var time = 0;
+    var dragon = null;
+
+    function onDocumentLoad () {
+      GL.init( document.getElementById('glcanvas') );
+      registerTSGLElements();
+
+      Scene.loadSceneWithId( 'dragon-scene' );
+      dragon = Entity.entityWithId( "dragon" ).getComponent("Transform");
+      setInterval( function () {
+        time += 0.03;
+        dragon.rotation = Quaternion.makeAngleAxis( 6.283 * 2 * time, new Vec3(0,1,0) );
+      }, 30 );
+    }
+  </script>
+
 
   <!-- Load Assets -->
-  <tsgl-shader id="shader_default" vert-src="/assets/shaders/test.vert" frag-src="/assets/shaders/test.frag"></tsgl-shader>
-  <tsgl-texture id="tex_marble" src="/assets/textures/marble.png"></tsgl-texture>
+  <tsgl-shader id="shader_default" vert-src="/assets/shaders/default.vert" frag-src="/assets/shaders/default.frag"></tsgl-shader>
+  <tsgl-shader id="shader_reflective" vert-src="/assets/shaders/reflective.vert" frag-src="/assets/shaders/reflective.frag"></tsgl-shader>
   <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
-  <tsgl-material id="mat_dragon" shader="shader_default">
-    <tsgl-property type="texture" name="uMainTex" value="tex_marble"></tsgl-property>
+
+  <tsgl-texture id="tex_metal" src="/assets/textures/rusty_metal.png"></tsgl-texture>
+  <tsgl-texture id="tex_metal_smoothness" src="/assets/textures/rusty_metal_smoothness.png"></tsgl-texture>
+  <tsgl-cubemap id="tex_environment"
+    left-src="/assets/textures/cubemap/left.png"
+    right-src="/assets/textures/cubemap/right.png"
+    top-src="/assets/textures/cubemap/top.png"
+    bottom-src="/assets/textures/cubemap/bottom.png"
+    front-src="/assets/textures/cubemap/front.png"
+    back-src="/assets/textures/cubemap/back.png"
+  ></tsgl-texture>
+
+  <tsgl-material id="mat_dragon" shader="shader_reflective">
+    <tsgl-property type="texture" name="uMainTex" value="tex_metal"></tsgl-property>
+    <tsgl-property type="texture" name="uSmoothTex" value="tex_metal_smoothness"></tsgl-property>
+    <tsgl-property type="cubemap" name="uEnvTex" value="tex_environment"></tsgl-property>
   </tsgl-material>
 
   <!-- Load Scene Hierarchy -->
@@ -39,7 +70,7 @@
       </tsgl-component>
     </tsgl-entity>
 
-    <tsgl-entity>
+    <tsgl-entity id="dragon">
       <tsgl-component type="renderable">
         <tsgl-property type="mesh" name="mesh" value="mesh_dragon"></tsgl-property>
         <tsgl-property type="material" name="material" value="mat_dragon"></tsgl-property>
@@ -52,7 +83,7 @@
       </tsgl-component>
       <tsgl-component type="light">
         <tsgl-property type="color" name="color" value="#FFFFFF"></tsgl-property>
-        <tsgl-property type="number" name="range" value="4"></tsgl-property>
+        <tsgl-property type="number" name="range" value="10"></tsgl-property>
       </tsgl-component>
     </tsgl-entity>
 
