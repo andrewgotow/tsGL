@@ -17,7 +17,8 @@ class TSGLMaterialElement extends TSGLElement {
         this._material = new Material( element.shader );
 
         var properties = this.getProperties();
-        this._material.properties = properties;
+        this._material.properties = this.getProperties( null, ["texture","cubemap"] );
+        this._material.textures = this.getProperties( ["texture","cubemap"] );
       }
     }
   }

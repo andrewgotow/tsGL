@@ -26,7 +26,7 @@
       dragon = Entity.entityWithId( "dragon" ).getComponent("Transform");
       setInterval( function () {
         time += 0.03;
-        dragon.rotation = Quaternion.makeAngleAxis( 6.283 * 2 * time, new Vec3(0,1,0) );
+        dragon.rotation = Quaternion.makeAngleAxis( 6.283 * 2 * time, new Vec3(0.5,1,0) );
       }, 30 );
     }
   </script>
@@ -35,7 +35,7 @@
   <!-- Load Assets -->
   <tsgl-shader id="shader_default" vert-src="/assets/shaders/default.vert" frag-src="/assets/shaders/default.frag"></tsgl-shader>
   <tsgl-shader id="shader_reflective" vert-src="/assets/shaders/reflective.vert" frag-src="/assets/shaders/reflective.frag"></tsgl-shader>
-  <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_dragon" src="/assets/models/torus.obj"></tsgl-mesh>
 
   <tsgl-texture id="tex_metal" src="/assets/textures/rusty_metal.png"></tsgl-texture>
   <tsgl-texture id="tex_metal_smoothness" src="/assets/textures/rusty_metal_smoothness.png"></tsgl-texture>

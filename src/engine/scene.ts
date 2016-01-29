@@ -44,6 +44,9 @@ class Scene {
     var scene = this;
     this._updateInterval = setInterval( function(){scene.update(0.03)}, 30 );
 
+    // bump the frame-rate down because I'm in a coffee shop and my battery's about to die.
+    //this._updateInterval = setInterval( function(){scene.update(0.1)}, 100 );
+
     return this;
   }
 

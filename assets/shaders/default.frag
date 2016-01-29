@@ -15,21 +15,23 @@ uniform mat4 uNormalMatrix;
   i, 0, 0, r
 */
 uniform mat4 uLightMatrix;
+// Defines thrown in to make unpacking light values clearer.
+#define lightColor vec4( uLightMatrix[0][0], uLightMatrix[1][0], uLightMatrix[2][0], 1.0 )
+#define lightIntensity uLightMatrix[3][0]
+#define lightPosition vec3( uLightMatrix[0][3], uLightMatrix[1][3], uLightMatrix[2][3] )
+#define lightRange uLightMatrix[3][3]
 
 // main texture sampler.
 uniform sampler2D uMainTex;
-//uniform samplerCube uEnvTex;
 
 // varying quantities passed by the vertex shader.
 varying vec3 fNormal;
 varying vec2 fTexcoord;
-varying vec3 fPosition;
+
 varying vec3 fLightDir; // the interpolated light direction for this fragment. (normalized)
-varying float fLightAtten; // the attenuation of this light, used as a multiplier for brightness.
+varying float fLightAtten; // the attenuation of this light, used as a multiplier for brightness
 
 void main() {
-  vec4 lightColor = vec4( uLightMatrix[0][0], uLightMatrix[1][0], uLightMatrix[2][0], uLightMatrix[3][0] );
-
   vec4 tex = texture2D( uMainTex, fTexcoord );
   float diffuse = max( 0.0, dot( fNormal, fLightDir ) ) * fLightAtten;
 

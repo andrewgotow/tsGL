@@ -28,7 +28,6 @@
   <!-- Load Assets -->
   <section> <!-- Shaders -->
     <tsgl-shader id="shader_default" vert-src="/assets/shaders/default.vert" frag-src="/assets/shaders/default.frag"></tsgl-shader>
-    <tsgl-shader id="shader_reflective" vert-src="/assets/shaders/reflective.vert" frag-src="/assets/shaders/reflective.frag"></tsgl-shader>
   </section>
 
   <section> <!-- Textures -->
@@ -38,16 +37,6 @@
     <tsgl-texture id="tex_arch" src="/assets/textures/dabrovic-sponza/arch.png"></tsgl-texture>
     <tsgl-texture id="tex_door" src="/assets/textures/dabrovic-sponza/door.png"></tsgl-texture>
     <tsgl-texture id="tex_window" src="/assets/textures/dabrovic-sponza/window.png"></tsgl-texture>
-
-    <tsgl-cubemap id="tex_environment"
-      left-src="/assets/textures/cubemap/left.png"
-      right-src="/assets/textures/cubemap/right.png"
-      top-src="/assets/textures/cubemap/top.png"
-      bottom-src="/assets/textures/cubemap/bottom.png"
-      front-src="/assets/textures/cubemap/front.png"
-      back-src="/assets/textures/cubemap/back.png"
-    ></tsgl-texture>
-
   </section>
 
   <section> <!-- Meshes -->
@@ -63,9 +52,8 @@
   </section>
 
   <section> <!-- Materials -->
-    <tsgl-material id="mat_brick" shader="shader_reflective">
+    <tsgl-material id="mat_brick" shader="shader_default">
       <tsgl-property type="texture" name="uMainTex" value="tex_brick"></tsgl-property>
-      <tsgl-property type="cubemap" name="uEnvTex" value="tex_environment"></tsgl-property>
     </tsgl-material>
     <tsgl-material id="mat_trim" shader="shader_default">
       <tsgl-property type="texture" name="uMainTex" value="tex_trim"></tsgl-property>

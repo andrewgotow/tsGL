@@ -15,6 +15,11 @@ uniform mat4 uNormalMatrix;
   i, 0, 0, r
 */
 uniform mat4 uLightMatrix;
+// Defines thrown in to make unpacking light values clearer.
+#define lightColor vec4( uLightMatrix[0][0], uLightMatrix[1][0], uLightMatrix[2][0], 1.0 )
+#define lightIntensity uLightMatrix[3][0]
+#define lightPosition vec3( uLightMatrix[0][3], uLightMatrix[1][3], uLightMatrix[2][3] )
+#define lightRange uLightMatrix[3][3]
 
 // main texture sampler.
 uniform sampler2D uMainTex;
@@ -24,15 +29,14 @@ uniform samplerCube uEnvTex;
 // varying quantities passed by the vertex shader.
 varying vec3 fNormal;
 varying vec2 fTexcoord;
-varying vec3 fPosition;
 varying vec3 fLightDir; // the interpolated light direction for this fragment. (normalized)
 varying float fLightAtten; // the attenuation of this light, used as a multiplier for brightness.
 
-void main() {
-  vec4 lightColor = vec4( uLightMatrix[0][0], uLightMatrix[1][0], uLightMatrix[2][0], uLightMatrix[3][0] );
+varying vec3 fReflectionDir; // the view-space reflection vector for this surface.
 
+void main() {
   vec4 tex = texture2D( uMainTex, fTexcoord );
-  vec4 env = textureCube( uEnvTex, fNormal );
+  vec4 env = textureCube( uEnvTex, fReflectionDir );
   vec4 smoothness = texture2D( uSmoothTex, fTexcoord );
 
   float diffuse = max( 0.0, dot( fNormal, fLightDir ) ) * fLightAtten;
@@ -42,5 +46,5 @@ void main() {
   // based on a "shininess" variable. I'm using a step function on the light intensity,
   // so that only the unlit base pass will have the added reflections, and all future lighting
   // passes won't add it again.
-  gl_FragColor = vec4( mix( litColor, env.rgb, step(uLightMatrix[3][0], 0.0) * smoothness.r ), 1.0 );
+  gl_FragColor = vec4( mix( litColor, env.rgb, step( lightIntensity, 0.0) * smoothness.r ), 1.0 );
 }

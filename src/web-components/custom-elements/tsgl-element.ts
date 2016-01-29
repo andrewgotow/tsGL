@@ -1,12 +1,17 @@
 class TSGLElement extends HTMLElement {
 
-  getProperties () : { [key: string]: any; } {
+  getProperties ( allowedTypes : string[] = null, excludedTypes : String[] = null ) : { [key: string]: any; } {
     var properties : { [key: string]: any; } = {};
 
     var elements = this.getElementsByTagName( "tsgl-property" );
     for ( var i = 0; i < elements.length; i ++ ) {
       var property = <TSGLPropertyElement>elements[i];
-      properties[ property.key ] = property.getValue();
+      var propertyType = property.type;
+      if ( allowedTypes == null || allowedTypes.indexOf( propertyType ) > -1 ) {
+        if ( excludedTypes == null || excludedTypes.indexOf( propertyType ) == -1 ) {
+          properties[ property.key ] = property.getValue();
+        }
+      }
     }
 
     return properties;

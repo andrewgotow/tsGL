@@ -2,6 +2,10 @@
 
 class Cubemap extends Texture {
 
+  constructor () {
+    super();
+  }
+
   static fromFiles ( urls: string[] ) : Cubemap {
     var tex = new Cubemap();
     tex.textureId = GL.context.createTexture();
@@ -14,25 +18,28 @@ class Cubemap extends Texture {
 
     var numLoaded = 0;
     for ( var i = 0; i < 6; i ++ ) {
-      var img = new Image();
-      var face = Cubemap._targetForFace(i);
+      (function () {
+        var img = new Image();
+        var face = Cubemap._targetForFace(i);
 
-      // This is wrapped in a function because loops in Javascript don't actually
-      // maintain their own scope. the "face" variable was shared across ALL instances,
-      // so by encapsulating it here, we can actually maintain a scope for our function.
-      (function (face : number) {
-        img.onload = function() {
-          GL.context.bindTexture( GL.context.TEXTURE_CUBE_MAP, tex.textureId );
-          GL.context.texImage2D( face, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img );
+        // This is wrapped in a function because loops in Javascript don't actually
+        // maintain their own scope. the "face" variable was shared across ALL instances,
+        // so by encapsulating it here, we can actually maintain a scope for our function.
+        (function (face : number) {
+          img.onload = function() {
+            GL.context.bindTexture( GL.context.TEXTURE_CUBE_MAP, tex.textureId );
+            GL.context.texImage2D( face, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img );
 
-          if ( ++ numLoaded == 6 ) {
-            tex.ready = true;
-            tex.onReady( tex );
+            if ( ++ numLoaded == 6 ) {
+              tex.ready = true;
+              tex.onReady( tex );
+            }
           }
-        }
-      })(face);
+        })(face);
+        
+        img.src = urls[i];
+      })();
 
-      img.src = urls[i];
     }
 
     return tex;

@@ -92,7 +92,7 @@ var Texture = (function (_super) {
 var Cubemap = (function (_super) {
     __extends(Cubemap, _super);
     function Cubemap() {
-        _super.apply(this, arguments);
+        _super.call(this);
     }
     Cubemap.fromFiles = function (urls) {
         var tex = new Cubemap();
@@ -104,19 +104,21 @@ var Cubemap = (function (_super) {
         GL.context.texParameteri(GL.context.TEXTURE_CUBE_MAP, GL.context.TEXTURE_WRAP_T, GL.context.CLAMP_TO_EDGE);
         var numLoaded = 0;
         for (var i = 0; i < 6; i++) {
-            var img = new Image();
-            var face = Cubemap._targetForFace(i);
-            (function (face) {
-                img.onload = function () {
-                    GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, tex.textureId);
-                    GL.context.texImage2D(face, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img);
-                    if (++numLoaded == 6) {
-                        tex.ready = true;
-                        tex.onReady(tex);
-                    }
-                };
-            })(face);
-            img.src = urls[i];
+            (function () {
+                var img = new Image();
+                var face = Cubemap._targetForFace(i);
+                (function (face) {
+                    img.onload = function () {
+                        GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, tex.textureId);
+                        GL.context.texImage2D(face, 0, GL.context.RGBA, GL.context.RGBA, GL.context.UNSIGNED_BYTE, img);
+                        if (++numLoaded == 6) {
+                            tex.ready = true;
+                            tex.onReady(tex);
+                        }
+                    };
+                })(face);
+                img.src = urls[i];
+            })();
         }
         return tex;
     };
@@ -138,6 +140,7 @@ var Material = (function (_super) {
         _super.call(this);
         this.shader = shader;
         this.properties = {};
+        this.textures = {};
         this.ready = true;
         this.onReady(this);
     }
@@ -147,6 +150,12 @@ var Material = (function (_super) {
             for (var key in this.properties) {
                 if (this.properties.hasOwnProperty(key)) {
                     this.shader.setUniform(key, this.properties[key]);
+                }
+            }
+            var texIndex = 0;
+            for (var key in this.textures) {
+                if (this.textures.hasOwnProperty(key)) {
+                    this.shader.setTexture(key, this.textures[key], texIndex++);
                 }
             }
         }
@@ -264,7 +273,6 @@ var Shader = (function (_super) {
         this.fragUrl = fragUrl;
         this.attributes = {};
         this.uniforms = {};
-        this._texUnitMap = {};
         this._program = null;
         this._buildShader();
     }
@@ -322,15 +330,26 @@ var Shader = (function (_super) {
             this.attributes[name] = GL.context.getAttribLocation(this._program, name);
         }
     };
-    Shader.prototype._texUnitForName = function (name) {
-        if (!(name in this._texUnitMap)) {
-            this._texUnitMap[name] = 0;
-            for (var key in this._texUnitMap) {
-                if (key != name)
-                    this._texUnitMap[name]++;
+    Shader.prototype.setTexture = function (key, value, textureUnit) {
+        if (textureUnit === void 0) { textureUnit = 0; }
+        if (key in this.uniforms) {
+            if (value.ready) {
+                var loc = this.uniforms[key];
+                GL.context.uniform1i(loc, textureUnit);
+                GL.context.activeTexture(GL.context.TEXTURE0 + textureUnit);
+                switch (typeOf(value)) {
+                    case "Texture":
+                        GL.context.bindTexture(GL.context.TEXTURE_2D, value.textureId);
+                        break;
+                    case "Cubemap":
+                        GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, value.textureId);
+                        break;
+                    default:
+                        console.warn("Attempting to assign texture of unknown type");
+                        break;
+                }
             }
         }
-        return this._texUnitMap[name];
     };
     Shader.prototype.setUniform = function (key, value) {
         if (this._program == null)
@@ -350,22 +369,6 @@ var Shader = (function (_super) {
                     break;
                 case "Mat4":
                     GL.context.uniformMatrix4fv(loc, false, value.data);
-                    break;
-                case "Texture":
-                    if (value.ready) {
-                        var texUnit = this._texUnitForName(key);
-                        GL.context.uniform1i(loc, texUnit);
-                        GL.context.activeTexture(GL.context.TEXTURE0 + texUnit);
-                        GL.context.bindTexture(GL.context.TEXTURE_2D, value.textureId);
-                    }
-                    break;
-                case "Cubemap":
-                    if (value.ready) {
-                        var texUnit = this._texUnitForName(key);
-                        GL.context.uniform1i(loc, texUnit);
-                        GL.context.activeTexture(GL.context.TEXTURE0 + texUnit);
-                        GL.context.bindTexture(GL.context.TEXTURE_CUBE_MAP, value.textureId);
-                    }
                     break;
                 default:
                     console.warn("Attempting to assign unknown type to shader uniform \"" + key + "\", in shader \"" + this.name + "\".");
@@ -1051,12 +1054,19 @@ var TSGLElement = (function (_super) {
     function TSGLElement() {
         _super.apply(this, arguments);
     }
-    TSGLElement.prototype.getProperties = function () {
+    TSGLElement.prototype.getProperties = function (allowedTypes, excludedTypes) {
+        if (allowedTypes === void 0) { allowedTypes = null; }
+        if (excludedTypes === void 0) { excludedTypes = null; }
         var properties = {};
         var elements = this.getElementsByTagName("tsgl-property");
         for (var i = 0; i < elements.length; i++) {
             var property = elements[i];
-            properties[property.key] = property.getValue();
+            var propertyType = property.type;
+            if (allowedTypes == null || allowedTypes.indexOf(propertyType) > -1) {
+                if (excludedTypes == null || excludedTypes.indexOf(propertyType) == -1) {
+                    properties[property.key] = property.getValue();
+                }
+            }
         }
         return properties;
     };
@@ -1103,7 +1113,8 @@ var TSGLMaterialElement = (function (_super) {
             if (element instanceof TSGLShaderElement) {
                 this._material = new Material(element.shader);
                 var properties = this.getProperties();
-                this._material.properties = properties;
+                this._material.properties = this.getProperties(null, ["texture", "cubemap"]);
+                this._material.textures = this.getProperties(["texture", "cubemap"]);
             }
         }
     };
