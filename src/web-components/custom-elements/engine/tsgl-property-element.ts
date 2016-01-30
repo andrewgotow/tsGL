@@ -55,7 +55,7 @@ class TSGLPropertyElement extends HTMLElement {
             this.value = element.cubemap;
           break;
         default:
-          console.warn( "tsgl-property element defined with unknown type: " + this.type );
+          this.value = valueAttr.value;
       }
       return this.value;
     }

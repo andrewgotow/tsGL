@@ -15,12 +15,26 @@
   </body>
 
   <script>
+    var time = 0;
+    var camera = null;
+
     function onDocumentLoad () {
       GL.init( document.getElementById('glcanvas') );
       registerTSGLElements();
+
+      // super lame, but just wait a few seconds before trying to draw the scene.
+      // our assets haven't finished loading, and I can't be bothered to check.
       window.setTimeout( function () {
         Scene.loadSceneWithId( 'dabrovic-scene' );
-        start();
+
+        camera = Entity.entityWithId( "camera" ).getComponent("Transform");
+        camera.rotation = Quaternion.makeAngleAxis( 90, new Vec3( 0, 1, 0 ) );
+        /*
+        setInterval( function () {
+          time += 0.03;
+          camera.rotation = Quaternion.makeAngleAxis( 6.283 * 2 * time, new Vec3(0,1,0) );
+        }, 30 );
+        */
       }, 3000 );
     }
   </script>
@@ -102,22 +116,22 @@
       </tsgl-entity>
       <tsgl-entity>
         <tsgl-component type="transform">
-          <tsgl-property type="vector" name="position" value="0 10 0"></tsgl-property>
-        </tsgl-component>
-        <tsgl-component type="light">
-          <tsgl-property type="color" name="color" value="#FFFFFF"></tsgl-property>
-          <tsgl-property type="number" name="intensity" value="0.6"></tsgl-property>
-          <tsgl-property type="number" name="range" value="30"></tsgl-property>
-        </tsgl-component>
-      </tsgl-entity>
-      <tsgl-entity>
-        <tsgl-component type="transform">
           <tsgl-property type="vector" name="position" value="10 2 -2"></tsgl-property>
         </tsgl-component>
         <tsgl-component type="light">
           <tsgl-property type="color" name="color" value="#8888FF"></tsgl-property>
           <tsgl-property type="number" name="intensity" value="1"></tsgl-property>
           <tsgl-property type="number" name="range" value="10"></tsgl-property>
+        </tsgl-component>
+      </tsgl-entity>
+      <tsgl-entity>
+        <tsgl-component type="transform">
+          <tsgl-property type="vector" name="position" value="0 10 0"></tsgl-property>
+        </tsgl-component>
+        <tsgl-component type="light">
+          <tsgl-property type="color" name="color" value="#FFFFFF"></tsgl-property>
+          <tsgl-property type="number" name="intensity" value="0.6"></tsgl-property>
+          <tsgl-property type="number" name="range" value="30"></tsgl-property>
         </tsgl-component>
       </tsgl-entity>
     </tsgl-entity>

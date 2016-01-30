@@ -27,7 +27,7 @@ class Texture extends Asset {
     img.src = url;
     return tex;
   }
-
+  
   private _unload () {
     GL.context.deleteTexture( this.textureId );
   }

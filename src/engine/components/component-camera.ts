@@ -48,9 +48,11 @@ class Camera extends Component {
   // one of these variables is changed, and is recalculated when requested.
   private _projection : Mat4;
 
+  renderTexture : RenderTexture;
+
   //private _fbo : WebGLFramebuffer;
-  //private _colorAttachment : WebGLRenderbuffer;
-  //private _depthAttachment : WebGLRenderbuffer;
+  //private _colorTexture : Texture;
+  //private _depthTexture : Texture;
 
   constructor ( fov : number, aspect : number ) {
     super();
@@ -61,9 +63,11 @@ class Camera extends Component {
 
     this._projection = null;
 
+    this.renderTexture = null;
+
     //this._fbo = null;
-    //this._colorAttachment = null;
-    //this._depthAttachment = null;
+    //this._colorTexture = null;
+    //this._depthTexture = null;
 
     //this._buildFbo();
   }
@@ -73,40 +77,53 @@ class Camera extends Component {
       this._projection = Mat4.makePerspective( this.fieldOfView, this.aspect, this.near, this.far );
     return this._projection;
   }
+  /*
+  private _buildFbo () {
+    var width = Math.floor( this.resolution.x );
+    var height = Math.floor( this.resolution.y );
+
+    // build a framebuffer
+    this._fbo = GL.context.createFramebuffer();
+    GL.context.bindFramebuffer( GL.context.FRAMEBUFFER, this._fbo );
+
+    // build render buffers.
+    var colorTex = new Texture();
+    colorTex.textureId = GL.context.createTexture();
+    GL.context.bindTexture( GL.context.TEXTURE_2D, colorTex.textureId );
+    GL.context.texParameteri( GL.context.TEXTURE_2D, GL.context.TEXTURE_MAG_FILTER, GL.context.NEAREST);
+    GL.context.texParameteri( GL.context.TEXTURE_2D, GL.context.TEXTURE_MIN_FILTER, GL.context.NEAREST);
+    GL.context.texImage2D( GL.context.TEXTURE_2D, 0, GL.context.RGBA, width, height, 0, GL.context.RGBA, GL.context.UNSIGNED_BYTE, null);
+    GL.context.framebufferTexture2D( GL.context.FRAMEBUFFER, GL.context.COLOR_ATTACHMENT0, GL.context.TEXTURE_2D, colorTex.textureId, 0);
+
+    colorTex.ready = true;
+    colorTex.onReady( colorTex );
+
+    //var depth = this._depthAttachment = gl.createRenderbuffer();
+    //gl.bindRenderbuffer( gl.RENDERBUFFER, depth );
+    //gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height );
+    //gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth );
+  }
+
+  private _destroyFbo () {
+    GL.context.bindFramebuffer( GL.context.FRAMEBUFFER, null );
+    GL.context.deleteFramebuffer( this._fbo );
+
+    //gl.deleteRenderbuffer( this._colorAttachment );
+    //gl.deleteRenderbuffer( this._depthAttachment );
+  }
+  */
+  useCamera () {
+    if ( this.renderTexture != null ) {
+      GL.context.bindFramebuffer( GL.context.FRAMEBUFFER, this.renderTexture.framebufferId );
+    }else{
+      GL.context.bindFramebuffer( GL.context.FRAMEBUFFER, null );
+    }
+  }
+
 }
 
 
 /*
-Camera.prototype._buildFbo = function () {
-  var width = Math.floor( this.resolution.x );
-  var height = Math.floor( this.resolution.y );
-
-  // build a framebuffer
-  this._fbo = gl.createFramebuffer();
-  gl.bindFramebuffer( gl.FRAMEBUFFER, this._fbo );
-
-  // build render buffers.
-  var color = this._colorAttachment = gl.createRenderbuffer();
-  gl.bindRenderbuffer( gl.RENDERBUFFER, color );
-  gl.renderbufferStorage( gl.RENDERBUFFER, gl.RGBA8, width, height );
-  gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, color );
-
-  var depth = this._depthAttachment = gl.createRenderbuffer();
-  gl.bindRenderbuffer( gl.RENDERBUFFER, depth );
-  gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height );
-  gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth );
-}
-
-Camera.prototype._destroyFbo = function () {
-  gl.deleteFramebuffer( this._fbo );
-  gl.deleteRenderbuffer( this._colorAttachment );
-  gl.deleteRenderbuffer( this._depthAttachment );
-}
-*/
-/*Camera.prototype.useCamera = function () {
-  //gl.bindFramebuffer( gl.FRAMEBUFFER, this._fbo );
-}
-
 Camera.prototype.blitCamera = function ( windowWidth, windowHeight ) {
   //console.warn( "Blitting camera to main display buffer does not work. Instead, we will need to render to a texture, and draw a fullscreen quad.")
   //gl.viewport( 0, 0, this.resolution.x, this.resolution.y );

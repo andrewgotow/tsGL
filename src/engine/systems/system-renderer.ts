@@ -3,6 +3,8 @@ class Renderer extends System {
   private _cameras : Camera[];
   private _lights : Light[];
 
+  private static _mainCamera : Camera;
+
   constructor () {
     super();
     this._renderables = [];
@@ -27,22 +29,21 @@ class Renderer extends System {
   update ( deltaTime : number ) {
     // for every camera in the scene, bind our camera and prepare to render into it.
     for ( var camIndex = 0; camIndex < this._cameras.length; camIndex ++ ) {
-      var camera = this._cameras[camIndex];
+      this._drawSceneWithCamera( this._cameras[camIndex] );
+    }
+  }
 
-      var viewMat = Mat4.invert( (<Transform>camera.entity.getComponent("Transform")).getMatrix() );
-      var projectionMat = camera.getProjection();
+  private _drawSceneWithCamera ( camera: Camera ) {
+    var viewMat = Mat4.invert( (<Transform>camera.entity.getComponent("Transform")).getMatrix() );
+    var projectionMat = camera.getProjection();
 
-      GL.context.clearColor( 0.1, 0.1, 0.1, 0.0 );
-      GL.context.clear( GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT );
+    camera.useCamera();
+    GL.context.clearColor( 0.1, 0.1, 0.1, 0.0 );
+    GL.context.clear( GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT );
 
-      // now, for every object in the scene,
-      for ( var rendIndex = 0; rendIndex < this._renderables.length; rendIndex ++ ) {
-        //try {
-          this._drawRenderable( this._renderables[rendIndex], viewMat, projectionMat );
-        //}catch(e) {
-        //  console.warn( "Failed to draw renderable entity." );
-        //}
-      }
+    // now, for every object in the scene,
+    for ( var rendIndex = 0; rendIndex < this._renderables.length; rendIndex ++ ) {
+      this._drawRenderable( this._renderables[rendIndex], viewMat, projectionMat );
     }
 
     GL.context.flush();

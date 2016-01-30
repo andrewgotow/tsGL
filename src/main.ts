@@ -1,3 +1,4 @@
+/*
 var transform : Transform = null;
 var time : number = 0;
 
@@ -13,3 +14,4 @@ function update ( dt: number ) {
   time += dt;
   transform.rotation = Quaternion.makeAngleAxis( 6.283 * 2 * time, new Vec3(0,1,0) );
 }
+*/

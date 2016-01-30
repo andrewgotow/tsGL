@@ -43,11 +43,14 @@ class TSGLComponentElement extends TSGLElement {
             light.intensity = properties["intensity"];
           if ( "range" in properties )
             light.range = properties["range"];
-
+          /*
+          if ( "type" in properties )
+            light.type = LightType[ <string>properties["type"] ];
+          */
           return light;
 
         case "camera":
-          var camera = new Camera( 60, 1.777 );
+          var camera = new Camera( 60, 1.0 );
 
           var properties = this.getProperties();
           if ( "fov" in properties )

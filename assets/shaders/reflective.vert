@@ -41,16 +41,16 @@ varying float fLightAtten; // the attenuation of this light, used as a multiplie
 varying vec3 fReflectionDir; // the view-space reflection vector for this surface.
 
 void main() {
-  vec4 vertPos = uModelViewMatrix * vec4(vPosition, 1.0); // vertex position in view-space
+  vec3 vertPos = (uModelViewMatrix * vec4(vPosition, 1.0)).xyz; // vertex position in view-space
   fNormal = (uNormalMatrix * vec4(vNormal,0.0)).xyz; // normal in view-space
 
   fTexcoord = vTexcoord;
 
-  fLightDir = (uModelViewMatrix * vec4(lightPosition,1.0) - vertPos).xyz; // in view-space.
+  fLightDir = lightPosition - vertPos; // in view-space.
   fLightAtten = 1.0 / pow( 1.0 + length( fLightDir ) / lightRange, 2.0 );
   fLightDir = normalize(fLightDir); // normalize the light direction while we're at it.
 
-  fReflectionDir = reflect( vertPos.xyz, fNormal );
+  fReflectionDir = reflect( vertPos, fNormal );
 
-  gl_Position = uProjection * vertPos; // position in screen space
+  gl_Position = uProjection * vec4(vertPos,1.0); // position in screen space
 }

@@ -24,6 +24,7 @@
 
       Scene.loadSceneWithId( 'dragon-scene' );
       dragon = Entity.entityWithId( "dragon" ).getComponent("Transform");
+
       setInterval( function () {
         time += 0.03;
         dragon.rotation = Quaternion.makeAngleAxis( 6.283 * 2 * time, new Vec3(0.5,1,0) );
@@ -35,7 +36,7 @@
   <!-- Load Assets -->
   <tsgl-shader id="shader_default" vert-src="/assets/shaders/default.vert" frag-src="/assets/shaders/default.frag"></tsgl-shader>
   <tsgl-shader id="shader_reflective" vert-src="/assets/shaders/reflective.vert" frag-src="/assets/shaders/reflective.frag"></tsgl-shader>
-  <tsgl-mesh id="mesh_dragon" src="/assets/models/torus.obj"></tsgl-mesh>
+  <tsgl-mesh id="mesh_dragon" src="/assets/models/dragon.obj"></tsgl-mesh>
 
   <tsgl-texture id="tex_metal" src="/assets/textures/rusty_metal.png"></tsgl-texture>
   <tsgl-texture id="tex_metal_smoothness" src="/assets/textures/rusty_metal_smoothness.png"></tsgl-texture>
@@ -61,6 +62,16 @@
 
     <!-- Entities -->
     <tsgl-entity id="camera">
+      <tsgl-component type="camera">
+        <tsgl-property type="number" name="fov" value="60"></tsgl-property>
+        <tsgl-property type="number" name="aspect" value="1"></tsgl-property>
+      </tsgl-component>
+      <tsgl-component type="transform">
+        <tsgl-property type="vector" name="position" value="0 0 1"></tsgl-property>
+      </tsgl-component>
+    </tsgl-entity>
+
+    <tsgl-entity id="textureCamera">
       <tsgl-component type="camera">
         <tsgl-property type="number" name="fov" value="60"></tsgl-property>
         <tsgl-property type="number" name="aspect" value="1"></tsgl-property>

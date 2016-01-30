@@ -263,6 +263,38 @@ var Mesh = (function (_super) {
     };
     return Mesh;
 }(Asset));
+var RenderTexture = (function (_super) {
+    __extends(RenderTexture, _super);
+    function RenderTexture(width, height) {
+        _super.call(this);
+        this.width = width;
+        this.height = height;
+        this.framebufferId = null;
+        this.colorTexture = null;
+        this.depthTexture = null;
+        this._buildFbo();
+    }
+    RenderTexture.prototype._buildFbo = function () {
+        this.framebufferId = GL.context.createFramebuffer();
+        GL.context.bindFramebuffer(GL.context.FRAMEBUFFER, this.framebufferId);
+        this.colorTexture = new Texture();
+        this.colorTexture.textureId = GL.context.createTexture();
+        GL.context.bindTexture(GL.context.TEXTURE_2D, this.colorTexture.textureId);
+        GL.context.texParameteri(GL.context.TEXTURE_2D, GL.context.TEXTURE_MAG_FILTER, GL.context.NEAREST);
+        GL.context.texParameteri(GL.context.TEXTURE_2D, GL.context.TEXTURE_MIN_FILTER, GL.context.NEAREST);
+        GL.context.texImage2D(GL.context.TEXTURE_2D, 0, GL.context.RGBA, this.width, this.height, 0, GL.context.RGBA, GL.context.UNSIGNED_BYTE, null);
+        GL.context.framebufferTexture2D(GL.context.FRAMEBUFFER, GL.context.COLOR_ATTACHMENT0, GL.context.TEXTURE_2D, this.colorTexture.textureId, 0);
+        this.colorTexture.ready = true;
+        this.colorTexture.onReady(this.colorTexture);
+        this.ready = true;
+        this.onReady(this);
+    };
+    RenderTexture.prototype._destroyFbo = function () {
+        GL.context.bindFramebuffer(GL.context.FRAMEBUFFER, null);
+        GL.context.deleteFramebuffer(this.framebufferId);
+    };
+    return RenderTexture;
+}(Asset));
 var Shader = (function (_super) {
     __extends(Shader, _super);
     function Shader(name, vertUrl, fragUrl) {
@@ -394,6 +426,7 @@ var Camera = (function (_super) {
         this.near = 0.1;
         this.far = 100;
         this._projection = null;
+        this.renderTexture = null;
     }
     Object.defineProperty(Camera.prototype, "fieldOfView", {
         get: function () {
@@ -443,6 +476,14 @@ var Camera = (function (_super) {
         if (this._projection == null)
             this._projection = Mat4.makePerspective(this.fieldOfView, this.aspect, this.near, this.far);
         return this._projection;
+    };
+    Camera.prototype.useCamera = function () {
+        if (this.renderTexture != null) {
+            GL.context.bindFramebuffer(GL.context.FRAMEBUFFER, this.renderTexture.framebufferId);
+        }
+        else {
+            GL.context.bindFramebuffer(GL.context.FRAMEBUFFER, null);
+        }
     };
     return Camera;
 }(Component));
@@ -644,14 +685,17 @@ var Renderer = (function (_super) {
     };
     Renderer.prototype.update = function (deltaTime) {
         for (var camIndex = 0; camIndex < this._cameras.length; camIndex++) {
-            var camera = this._cameras[camIndex];
-            var viewMat = Mat4.invert(camera.entity.getComponent("Transform").getMatrix());
-            var projectionMat = camera.getProjection();
-            GL.context.clearColor(0.1, 0.1, 0.1, 0.0);
-            GL.context.clear(GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT);
-            for (var rendIndex = 0; rendIndex < this._renderables.length; rendIndex++) {
-                this._drawRenderable(this._renderables[rendIndex], viewMat, projectionMat);
-            }
+            this._drawSceneWithCamera(this._cameras[camIndex]);
+        }
+    };
+    Renderer.prototype._drawSceneWithCamera = function (camera) {
+        var viewMat = Mat4.invert(camera.entity.getComponent("Transform").getMatrix());
+        var projectionMat = camera.getProjection();
+        camera.useCamera();
+        GL.context.clearColor(0.1, 0.1, 0.1, 0.0);
+        GL.context.clear(GL.context.COLOR_BUFFER_BIT | GL.context.DEPTH_BUFFER_BIT);
+        for (var rendIndex = 0; rendIndex < this._renderables.length; rendIndex++) {
+            this._drawRenderable(this._renderables[rendIndex], viewMat, projectionMat);
         }
         GL.context.flush();
     };
@@ -704,16 +748,6 @@ var GL = (function () {
     };
     return GL;
 }());
-var transform = null;
-var time = 0;
-function start() {
-    transform = Entity.entityWithId("camera").getComponent("Transform");
-    setInterval(function () { update(0.03); }, 30);
-}
-function update(dt) {
-    time += dt;
-    transform.rotation = Quaternion.makeAngleAxis(6.283 * 2 * time, new Vec3(0, 1, 0));
-}
 var Color = (function () {
     function Color(r, g, b, a) {
         this.r = r;
@@ -1227,7 +1261,7 @@ var TSGLComponentElement = (function (_super) {
                         light.range = properties["range"];
                     return light;
                 case "camera":
-                    var camera = new Camera(60, 1.777);
+                    var camera = new Camera(60, 1.0);
                     var properties = this.getProperties();
                     if ("fov" in properties)
                         camera.fieldOfView = properties["fov"];
@@ -1313,7 +1347,7 @@ var TSGLPropertyElement = (function (_super) {
                         this.value = element.cubemap;
                     break;
                 default:
-                    console.warn("tsgl-property element defined with unknown type: " + this.type);
+                    this.value = valueAttr.value;
             }
             return this.value;
         }
